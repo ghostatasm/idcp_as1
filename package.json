@@ -2,8 +2,8 @@
   "name": "Logins",
   "version": "1.0.0",
   "engines": {
-    "node": "12.16.0",
-    "npm": "6.13.7"
+    "node": ">=12.16.0",
+    "npm": ">=6.13.7"
   },
   "description": "A Simple Login Example using Node.js, Mongo and Redis",
   "main": "./server/app.js",
@@ -24,9 +24,10 @@
   "author": "Cody Van De Mark",
   "license": "Apache 2.0",
   "devDependencies": {
-    "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.8.7",
-    "@babel/preset-env": "^7.8.7",
+    "@babel/cli": "^7.13.14",
+    "@babel/compat-data": "^7.13.12",
+    "@babel/core": "^7.13.14",
+    "@babel/preset-env": "^7.13.12",
     "eslint": "^6.8.0",
     "eslint-config-airbnb": "^18.1.0",
     "eslint-plugin-import": "^2.20.1",
