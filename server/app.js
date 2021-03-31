@@ -35,8 +35,8 @@ let redisURL = {
   hostname: 'redis-16651.c16.us-east-1-3.ec2.cloud.redislabs.com',
   port: '16651',
 };
+let redisPASS = "eIpoBtUFTX83w2hyuIMCdxy4Pi7nRucs";
 
-let redisPASS = process.env.REDISCLOUD_PASS;
 if (process.env.REDISCLOUD_URL) {
   redisURL = url.parse(process.env.REDISCLOUD_URL);
   [, redisPASS] = redisURL.auth.split(':');
