@@ -36,15 +36,17 @@ const makeDomo = (req, res) => {
   const newDomo = new Domo.DomoModel(domoData);
 
   const domoPromise = newDomo.save((err) => {
-    console.log(err);
-
     if (err) {
-      if (err.path === 'age' && err.kind === 'min') {
+      console.log(err);
+
+      if (err.kind === 'min' && err.path === 'age') {
         return res.status(400).json({ error: 'RAWR! Age must be a positive number' });
       }
+
+      return res.status(400).json({ error: 'An error ocurred' });
     }
 
-    return res.status(400).json({ error: 'An error ocurred' });
+    return err;
   });
 
   if (domoPromise) {
