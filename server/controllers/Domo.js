@@ -35,29 +35,22 @@ const makeDomo = (req, res) => {
 
   const newDomo = new Domo.DomoModel(domoData);
 
-  const domoPromise = newDomo.save((err) => {
-    if (err) {
-      console.log(err);
+  let domoPromise;
+  try {
+    domoPromise = newDomo.save();
+  } catch (err) {
+    console.log(err);
+  }
 
-      if (err.kind === 'min' && err.path === 'age') {
-        return res.status(400).json({ error: 'RAWR! Age must be a positive number' });
-      }
+  domoPromise.then(() => res.json({ redirect: '/maker' }));
 
-      return res.status(400).json({ error: 'An error ocurred' });
+  domoPromise.catch((err) => {
+    if (err.errors.age.kind === 'min') {
+      return res.status(400).json({ error: 'RAWR! Age must be a positive number' });
     }
 
-    return err;
+    return res.status(400).json({ error: 'An error ocurred' });
   });
-
-  if (domoPromise) {
-    domoPromise.then(() => res.json({ redirect: '/maker' }));
-
-    domoPromise.catch((err) => {
-      console.log(err);
-
-      return res.status(400).json({ error: 'An error ocurred' });
-    });
-  }
 
   return domoPromise;
 };
