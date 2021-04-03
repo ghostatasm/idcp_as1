@@ -22,7 +22,7 @@ const login = (req, res) => {
 
   return Account.AccountModel.authenticate(username, password, (err, account) => {
     if (err || !account) {
-      return res.status(401).json({ errror: 'Wrong username or password' });
+      return res.status(401).json({ error: 'Wrong username or password' });
     }
 
     req.session.account = Account.AccountModel.toAPI(account);
