@@ -35,11 +35,7 @@ const makeDomo = (req, res) => {
 
   const newDomo = new Domo.DomoModel(domoData);
 
-  const domoPromise = newDomo.save();
-
-  domoPromise.then(() => res.json({ redirect: '/maker' }));
-
-  domoPromise.catch((err) => {
+  const domoPromise = newDomo.save((err) => {
     console.log(err);
     if (err.code === 11000) {
       return res.status(400).json({ error: 'Domo already exists.' });
@@ -48,7 +44,18 @@ const makeDomo = (req, res) => {
     return res.status(400).json({ error: 'An error ocurred' });
   });
 
-  return domoPromise;
+  if (domoPromise) {
+    domoPromise.then(() => res.json({ redirect: '/maker' }));
+
+    domoPromise.catch((err) => {
+      console.log(err);
+      if (err.code === 11000) {
+        return res.status(400).json({ error: 'Domo already exists.' });
+      }
+
+      return res.status(400).json({ error: 'An error ocurred' });
+    });
+  }
 };
 
 module.exports.makerPage = makerPage;
