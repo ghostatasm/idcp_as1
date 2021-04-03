@@ -37,8 +37,11 @@ const makeDomo = (req, res) => {
 
   const domoPromise = newDomo.save((err) => {
     console.log(err);
-    if (err.code === 11000) {
-      return res.status(400).json({ error: 'Domo already exists.' });
+
+    if (err) {
+      if (err.path === 'age' && err.kind === 'min') {
+        return res.status(400).json({ error: 'RAWR! Age must be a positive number' });
+      }
     }
 
     return res.status(400).json({ error: 'An error ocurred' });
@@ -49,9 +52,6 @@ const makeDomo = (req, res) => {
 
     domoPromise.catch((err) => {
       console.log(err);
-      if (err.code === 11000) {
-        return res.status(400).json({ error: 'Domo already exists.' });
-      }
 
       return res.status(400).json({ error: 'An error ocurred' });
     });
