@@ -56,6 +56,8 @@ const makeDomo = (req, res) => {
       return res.status(400).json({ error: 'An error ocurred' });
     });
   }
+
+  return domoPromise;
 };
 
 module.exports.makerPage = makerPage;
