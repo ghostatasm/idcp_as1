@@ -1,26 +1,34 @@
 "use strict";
 
-var handleDomo = function handleDomo(e) {
+var handleDomo = function handleDomo(e, csrf) {
   e.preventDefault();
   $("#domoMessage").animate({
     width: 'hide'
   }, 350);
 
-  if ($("#domoName").val() == '' || $("#domoAge").val() == '') {
+  if ($("#domoName").val() == '' || $("#domoAge").val() == '' || $("#domoSize").val() == '') {
     handleError("RAWR! All fields are required");
     return false;
   }
 
   sendAjax('POST', $("#domoForm").attr("action"), $("#domoForm").serialize(), function () {
-    loadDomosFromServer();
+    loadDomosFromServer(csrf);
   });
   return false;
+};
+
+var handleDomoDelete = function handleDomoDelete(e, id, csrf) {
+  sendAjax('DELETE', "/deleteDomo?id=".concat(id), "_csrf=".concat(csrf), function () {
+    loadDomosFromServer(csrf);
+  });
 };
 
 var DomoForm = function DomoForm(props) {
   return /*#__PURE__*/React.createElement("form", {
     id: "domoForm",
-    onSubmit: handleDomo,
+    onSubmit: function onSubmit(e) {
+      return handleDomo(e, props.csrf);
+    },
     name: "domoForm",
     action: "/maker",
     method: "POST",
@@ -39,6 +47,13 @@ var DomoForm = function DomoForm(props) {
     type: "text",
     name: "age",
     placeholder: "Domo Age"
+  }), /*#__PURE__*/React.createElement("label", {
+    htmlFor: "size"
+  }, "Size: "), /*#__PURE__*/React.createElement("input", {
+    id: "domoSize",
+    type: "text",
+    name: "size",
+    placeholder: "Domo Size"
   }), /*#__PURE__*/React.createElement("input", {
     type: "hidden",
     name: "_csrf",
@@ -71,17 +86,25 @@ var DomoList = function DomoList(props) {
       className: "domoName"
     }, "Name: ", domo.name), /*#__PURE__*/React.createElement("h3", {
       className: "domoAge"
-    }, "Age: ", domo.age));
+    }, "Age: ", domo.age), /*#__PURE__*/React.createElement("h3", {
+      className: "domoSize"
+    }, "Size: ", domo.size), /*#__PURE__*/React.createElement("button", {
+      className: "domoDelete",
+      onClick: function onClick(e) {
+        return handleDomoDelete(e, domo._id, props.csrf);
+      }
+    }, "Delete"));
   });
   return /*#__PURE__*/React.createElement("div", {
     className: "domoList"
   }, domoNodes);
 };
 
-var loadDomosFromServer = function loadDomosFromServer() {
-  sendAjax('GET', '/getDomos', null, function (data) {
+var loadDomosFromServer = function loadDomosFromServer(csrf) {
+  sendAjax('GET', '/getDomos', "_csrf=".concat(csrf), function (data) {
     ReactDOM.render( /*#__PURE__*/React.createElement(DomoList, {
-      domos: data.domos
+      domos: data.domos,
+      csrf: csrf
     }), document.querySelector("#domos"));
   });
 };
@@ -91,9 +114,10 @@ var setup = function setup(csrf) {
     csrf: csrf
   }), document.querySelector("#makeDomo"));
   ReactDOM.render( /*#__PURE__*/React.createElement(DomoList, {
-    domos: []
+    domos: [],
+    csrf: csrf
   }), document.querySelector("#domos"));
-  loadDomosFromServer();
+  loadDomosFromServer(csrf);
 };
 
 var getToken = function getToken() {

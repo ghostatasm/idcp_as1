@@ -50,7 +50,7 @@ nav:nth-child(1) {
 .domoForm {
     border: 2px solid #338acc;
     height: 35px;
-    width: 700px;
+    width: 900px;
     margin-top:0px;
     padding-top:10px;
     background-color: #55acee;
@@ -209,6 +209,10 @@ nav:nth-child(1) {
     padding: 10px;
     min-height:60px;
     overflow: hidden;
+
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
 }
 
 .domo:hover {
@@ -224,7 +228,6 @@ img.domoFace {
     height: 50px;
     width: 50px;
     border-radius: 4px;
-    margin-top:10px;
     float:left;
 }
 
@@ -237,20 +240,45 @@ h3.emptyDomo {
 }
 
 h3.domoName {
-    float:left;
-    width: 200px;
+    margin-right: .5em;
     font-weight: bold;
-    padding-left: 65px;
     font-size: 1.5em;
 }
 
 h3.domoAge {
-    float:right;
+    margin-left: .5em;
+    margin-right: .5em;
     text-align: left;
-    width: 100px;
     font-weight: bold;
-    padding-right: 40px;
     font-size: 1.5em;
+}
+
+h3.domoSize {
+    margin-left: .5em;
+    text-align: left;
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+.domoDelete {
+    margin-left: auto;
+    align-self: flex-end;
+    transition: background-color 0.4s ease;
+    display: inline;
+    width: 90px;
+    background-color: #55acee;
+    border-radius: 2px;
+    color: white;
+    text-decoration: none;
+}
+
+.domoDelete:link, .makeDomoSubmit:visited, .makeDomoSubmit:hover, .makeDomoSubmit:active {
+    color: white;
+}
+
+.domoDelete:hover {
+    transition: background-color 0.4s ease;
+    background-color: #338acc;
 }
 
 .domo:first-child {
