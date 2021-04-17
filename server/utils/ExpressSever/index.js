@@ -7,12 +7,12 @@ const cookieParser = require('cookie-parser'); // auto cookie parsing
 
 const extensions = require('./extensions');
 
-/**
- * Creates an Express-based server
- * @param {Function} router function containing server routes
- * @param {Object} params determines optional functionalities to enable
- * */
 class ExpressServer {
+  /**
+   * Creates an Express-based server
+   * @param {Function} router function containing server routes
+   * @param {Object} params determines optional functionalities to enable
+   */
   constructor(router, params) {
     this.app = express(); // create the app
     this.use = this.app.use; // enable extending the server
