@@ -1,0 +1,12 @@
+<header>
+    <a href="/"><img id="logo" src="/assets/img/logo.png" alt="logo" /></a>
+    <nav>
+        {{#if loggedin}}
+        <a id="logoutButton" href="/logout">Log out</a>
+        {{else}}
+        <a id="loginButton" href="/login">Login</a>
+        <a id="signupButton" href="/signup">Sign up</a>
+        {{/if}}
+
+    </nav>
+</header>

@@ -1,10 +1,6 @@
 const models = require('../models');
 
-const { Account } = models;
-
-const loginPage = (req, res) => {
-  res.render('login', { csrfToken: req.csrfToken() });
-};
+const { AccountModel } = models.Account;
 
 const logout = (req, res) => {
   req.session.destroy();
@@ -17,17 +13,24 @@ const login = (req, res) => {
   const password = `${req.body.pass}`;
 
   if (!username || !password) {
-    return res.status(400).json({ error: 'RAWR! All fields are required' });
+    return res.status(400).json({ error: 'All fields are required' });
   }
 
-  return Account.AccountModel.authenticate(username, password, (err, account) => {
-    if (err || !account) {
+  // Authenticate user and return client redirection
+  return AccountModel.authenticate(username, password, (err, account) => {
+    if (err) {
+      return res.status(400).json({ error: 'An error ocurred trying to authenticate' });
+    }
+
+    if (!account) {
       return res.status(401).json({ error: 'Wrong username or password' });
     }
 
-    req.session.account = Account.AccountModel.toAPI(account);
+    // Set session account cookie
+    req.session.account = AccountModel.toAPI(account);
 
-    return res.json({ redirect: '/maker' });
+    // Return redirect
+    return res.json({ redirect: '/app' });
   });
 };
 
@@ -38,21 +41,22 @@ const signup = (req, res) => {
   req.body.pass2 = `${req.body.pass2}`;
 
   if (!req.body.username || !req.body.pass || !req.body.pass2) {
-    return res.status(400).json({ error: 'RAWR! All fields are required' });
+    return res.status(400).json({ error: 'All fields are required' });
   }
 
   if (req.body.pass !== req.body.pass2) {
-    return res.status(400).json({ error: 'RAWR! Passwords do not match' });
+    return res.status(400).json({ error: 'Passwords do not match' });
   }
 
-  return Account.AccountModel.generateHash(req.body.pass, (salt, hash) => {
+  // Create user and return client redirection
+  return AccountModel.generateHash(req.body.pass, (salt, hash) => {
     const accountData = {
       username: req.body.username,
       salt,
       password: hash,
     };
 
-    const newAccount = new Account.AccountModel(accountData);
+    const newAccount = new AccountModel(accountData);
 
     newAccount.save((err, doc) => {
       if (err) {
@@ -62,19 +66,20 @@ const signup = (req, res) => {
           return res.status(400).json({ error: 'Username already in use. ' });
         }
 
-        return res.status(400).json({ error: 'An error ocurred' });
+        return res.status(400).json({ error: 'An error ocurred creating the account' });
       }
 
-      req.session.account = Account.AccountModel.toAPI(doc);
-      return res.json({ redirect: '/maker' });
+      // Set session account cookie
+      req.session.account = AccountModel.toAPI(doc);
+
+      // Return redirect
+      return res.json({ redirect: '/app' });
     });
   });
 };
 
-
 module.exports = {
-  loginPage,
-  login,
   logout,
+  login,
   signup,
 };

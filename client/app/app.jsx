@@ -1,3 +1,4 @@
+// Functionalities
 const handleDomo = (e, csrf) => {
     e.preventDefault();
 
@@ -21,6 +22,7 @@ const handleDomoDelete = (e, id, csrf) => {
     });
 }
 
+// React components
 const DomoForm = (props) => {
     return (
         <form id="domoForm"
@@ -70,6 +72,7 @@ const DomoList = (props) => {
     );
 };
 
+// React component factories
 const loadDomosFromServer = (csrf) => {
     sendAjax('GET', '/getDomos', `_csrf=${csrf}`, (data) => {
         ReactDOM.render(
@@ -79,26 +82,17 @@ const loadDomosFromServer = (csrf) => {
     });
 };
 
-const setup = (csrf) => {
-    ReactDOM.render(
-        <DomoForm csrf={csrf} />,
-        document.querySelector("#makeDomo")
-    );
+// Init
+const init = () => {
+    // ReactDOM.render(
+    //     <DomoForm csrf={csrf} />,
+    //     document.querySelector("#makeDomo")
+    // );
 
-    ReactDOM.render(
-        <DomoList domos={[]} csrf={csrf} />,
-        document.querySelector("#domos")
-    );
+    // ReactDOM.render(
+    //     <DomoList domos={[]} csrf={csrf} />,
+    //     document.querySelector("#domos")
+    // );
 
-    loadDomosFromServer(csrf);
+    // loadDomosFromServer(csrf);
 };
-
-const getToken = () => {
-    sendAjax('GET', '/getToken', null, (result) => {
-        setup(result.csrfToken);
-    });
-};
-
-$(document).ready(() => {
-    getToken();
-});

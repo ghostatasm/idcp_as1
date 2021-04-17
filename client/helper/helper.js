@@ -1,24 +1,62 @@
-const handleError = (message) => {
-    $("#errorMessage").text(message);
-    $("#domoMessage").animate({ width: 'toggle' }, 350);
+let csrf = ''; // Cache for current csrf token
+
+// Gets a new csrf token from the server
+const getToken = (callback) => {
+    sendRequest('GET', '/getToken', null, (result) => {
+        callback(result.csrfToken);
+    });
 };
 
-const redirect = (response) => {
-    $("#domoMessage").animate({ width: "hide" }, 350);
+const handleError = (message) => {
+    console.log(message);
+    
+    // TODO
+};
+
+const handleRedirect = (response) => {
     window.location = response.redirect;
 };
 
-const sendAjax = (type, action, data, success) => {
-    $.ajax({
-        cache: false,
-        type: type,
-        url: action,
-        data: data,
-        dataType: "json",
-        success: success,
-        error: (xhr, status, error) => {
-            var messageObj = JSON.parse(xhr.responseText);
-            handleError(messageObj.error);
+const sendRequest = (method, url, body, success) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(method, url);
+    xhr.setRequestHeader('Accept', 'application/json');
+    xhr.onload = e => {
+        const response = JSON.parse(xhr.response)
+        if (response.error) {
+            handleError(response.error);
         }
-    });
+        else {
+            success(response);
+        }
+    };
+    xhr.onerror = (err) => {
+        console.log(err);
+        handleError(err)
+    };
+    if (body) {
+        xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        xhr.send(body);
+    }
+    else {
+        xhr.send();
+    }
 };
+
+// Returns all fields of a form formatted to x-www-form-urlencoded
+// https://stackoverflow.com/questions/39786337/how-to-convert-js-object-data-to-x-www-form-urlencoded
+const serialize = (form) => {
+    const data = [];
+    for (const [key, value] of new FormData(form)) {
+        data.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
+    }
+    return data.join('&');
+}
+
+// All pages must implement init() !!!
+document.addEventListener('DOMContentLoaded', e => {
+    getToken((csrfToken) => {
+        csrf = csrfToken;
+        init();
+    });
+});

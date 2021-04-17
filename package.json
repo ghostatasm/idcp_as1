@@ -1,18 +1,18 @@
 {
-  "name": "Logins",
+  "name": "ultimate-ttt",
   "version": "1.0.0",
   "engines": {
     "node": ">=12.16.0",
     "npm": ">=6.13.7"
   },
-  "description": "A Simple Login Example using Node.js, Mongo and Redis",
+  "description": "A networked service for playing Ultimate Tic Tac Toe over the web",
   "main": "./server/app.js",
   "scripts": {
-    "buildLoginBundle": "babel ./client/login ./client/helper --presets @babel/preset-react --out-file ./hosted/loginBundle.js",
-    "buildAppBundle": "babel ./client/app ./client/helper --presets @babel/preset-react --out-file ./hosted/bundle.js",
-    "watchLoginBundle": "babel --watch ./client/login ./client/helper --presets @babel/preset-react --out-file ./hosted/loginBundle.js",
-    "watchAppBundle": "babel --watch ./client/app ./client/helper --presets @babel/preset-react --out-file ./hosted/bundle.js",
-    "build": "npm run buildLoginBundle && npm run buildAppBundle",
+    "buildLogin": "babel ./client/login ./client/helper --presets @babel/preset-react --out-file ./hosted/loginBundle.js",
+    "buildApp": "babel ./client/app ./client/helper --presets @babel/preset-react --out-file ./hosted/appBundle.js",
+    "watchLogin": "babel --watch ./client/login ./client/helper --presets @babel/preset-react --out-file ./hosted/loginBundle.js",
+    "watchApp": "babel --watch ./client/app ./client/helper --presets @babel/preset-react --out-file ./hosted/bundle.js",
+    "build": "npm run buildLogin && npm run buildApp",
     "nodemon": "nodemon --watch ./server ./server/app.js",
     "start": "node ./server/app.js",
     "pretest": "eslint ./server --fix",
@@ -24,7 +24,7 @@
     "Redis",
     "Login"
   ],
-  "author": "Cody Van De Mark",
+  "author": "Camilo Lima",
   "license": "Apache 2.0",
   "devDependencies": {
     "@babel/cli": "^7.13.14",
@@ -46,7 +46,6 @@
     "express": "^4.17.1",
     "express-handlebars": "^3.1.0",
     "express-session": "^1.17.0",
-    "helmet": "^3.21.3",
     "mongoose": "^5.9.5",
     "redis": "^3.0.2",
     "serve-favicon": "^2.5.0",

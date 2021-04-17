@@ -1,11 +1,24 @@
-const crypto = require('crypto');
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
-let AccountModel = {};
+// Encryption constants
 const iterations = 10000;
 const saltLength = 64;
 const keyLength = 64;
 
+// Helper password decryption function
+const validatePassword = (doc, password, callback) => {
+  const pass = doc.password;
+
+  return crypto.pbkdf2(password, doc.salt, iterations, keyLength, 'RSA-SHA512', (err, hash) => {
+    if (hash.toString('hex') !== pass) {
+      return callback(false);
+    }
+    return callback(true);
+  });
+};
+
+let AccountModel = {};
 const AccountSchema = new mongoose.Schema({
   username: {
     type: String,
@@ -28,22 +41,12 @@ const AccountSchema = new mongoose.Schema({
   },
 });
 
+// Returns simplified copy of account document
 AccountSchema.statics.toAPI = (doc) => ({
-  // _id is built into your mongo document and is guaranteed to be unique
+  // _id is built into mongo document and is guaranteed to be unique
   username: doc.username,
   _id: doc._id,
 });
-
-const validatePassword = (doc, password, callback) => {
-  const pass = doc.password;
-
-  return crypto.pbkdf2(password, doc.salt, iterations, keyLength, 'RSA-SHA512', (err, hash) => {
-    if (hash.toString('hex') !== pass) {
-      return callback(false);
-    }
-    return callback(true);
-  });
-};
 
 AccountSchema.statics.findOneByUsername = (name, callback) => {
   const search = {

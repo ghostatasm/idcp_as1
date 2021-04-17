@@ -1,4 +1,4 @@
-const expressHandlebars = require('express-handlebars'); // server-side rendering
+const exphbs = require('express-handlebars'); // server-side rendering
 
 /**
  * Attach Handlebars rendering to server app
@@ -6,7 +6,10 @@ const expressHandlebars = require('express-handlebars'); // server-side renderin
  * @param {String} viewsPath - Path to views folder
  */
 const use = (app, viewsPath) => {
-  app.engine('handlebars', expressHandlebars({ defaultLayout: 'main' }));
+  app.engine('handlebars', exphbs({
+    defaultLayout: 'main',
+  }));
+
   app.set('view engine', 'handlebars');
   app.set('views', viewsPath);
 };
