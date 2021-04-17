@@ -1,0 +1,25 @@
+{
+    "faviconPath": "<your/path/here>",
+    "hostStaticAssets": {
+        "from": "<your/path/here>",
+        "to": "<your/URL/here>"
+    },
+    "extensions": {
+        "mongoose": {
+            "dbURL": "<your/URL/here>",
+            "mongooseOptions": {
+                "useNewUrlParser": true,
+                "useUnifiedTopology": true,
+                "useCreateIndex": true
+            }
+        },
+        "redisSession": {
+            "redisURL": "<your/URL/here>",
+            "secret": "Your secret string here"
+        },
+        "handlebars": {
+            "viewsPath": "<your/path/here>" 
+        },
+        "csurf": true
+    }
+}

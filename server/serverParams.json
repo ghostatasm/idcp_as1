@@ -1,0 +1,25 @@
+{
+    "faviconPath": "./hosted/img/favicon.png",
+    "hostStaticAssets": {
+        "from": "./hosted/",
+        "to": "/assets"
+    },
+    "extensions": {
+        "mongoose": {
+            "dbURL": "mongodb://localhost/ultimateTTT",
+            "mongooseOptions": {
+                "useNewUrlParser": true,
+                "useUnifiedTopology": true,
+                "useCreateIndex": true
+            }
+        },
+        "redisSession": {
+            "redisURL": "redis://default:VqhSFRgtfKFR712ux95bxaGxrT9qstOr@redis-16099.c261.us-east-1-4.ec2.cloud.redislabs.com:16099", 
+            "secret": "Trouble in Tic Tac Toe Town"
+        },
+        "handlebars": {
+            "viewsPath": "./views/" 
+        },
+        "csurf": true
+    }
+}

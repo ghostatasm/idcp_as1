@@ -1,8 +1,6 @@
 const crypto = require('crypto');
 const mongoose = require('mongoose');
 
-mongoose.Promise = global.Promise;
-
 let AccountModel = {};
 const iterations = 10000;
 const saltLength = 64;
@@ -47,7 +45,7 @@ const validatePassword = (doc, password, callback) => {
   });
 };
 
-AccountSchema.statics.findByUsername = (name, callback) => {
+AccountSchema.statics.findOneByUsername = (name, callback) => {
   const search = {
     username: name,
   };
@@ -62,7 +60,7 @@ AccountSchema.statics.generateHash = (password, callback) => {
 };
 
 AccountSchema.statics.authenticate = (username, password, callback) => {
-  AccountModel.findByUsername(username, (err, doc) => {
+  AccountModel.findOneByUsername(username, (err, doc) => {
     if (err) {
       return callback(err);
     }
