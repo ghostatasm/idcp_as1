@@ -1,7 +1,7 @@
-
 const serverParams = require('./serverParams.json'); // Import server parameters
 const router = require('./router.js'); // Import routes
-const ExpressServer = require('./utils/ExpressSever'); // Helper express server maker class
+const ExpressApp = require('./utils/ExpressApp'); // Helper express server maker class
+const sockets = require('./sockets.js');
 
 // Setup environment variables
 const port = process.env.PORT || process.env.NODE_PORT || 3000;
@@ -12,5 +12,7 @@ const redisURL = process.env.REDISCLOUD_URL || serverParams.extensions.redisSess
 serverParams.extensions.mongoose.dbURL = dbURL;
 serverParams.extensions.redisSession.redisURL = redisURL;
 
-const server = new ExpressServer(router, serverParams); // Create Express server
-server.listen(port); // Start server
+// Start Server and WebSockets
+const app = new ExpressApp(router, serverParams); // Create Express server
+const server = app.start(port); // Start and get the server
+sockets.start(server); // Start WebSockets (can cache socket from return value)

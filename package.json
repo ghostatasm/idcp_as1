@@ -11,7 +11,7 @@
     "buildLogin": "babel ./client/login ./client/helper --presets @babel/preset-react --out-file ./hosted/loginBundle.js",
     "buildApp": "babel ./client/app ./client/helper --presets @babel/preset-react --out-file ./hosted/appBundle.js",
     "watchLogin": "babel --watch ./client/login ./client/helper --presets @babel/preset-react --out-file ./hosted/loginBundle.js",
-    "watchApp": "babel --watch ./client/app ./client/helper --presets @babel/preset-react --out-file ./hosted/bundle.js",
+    "watchApp": "babel --watch ./client/app ./client/helper --presets @babel/preset-react --out-file ./hosted/appBundle.js",
     "build": "npm run buildLogin && npm run buildApp",
     "nodemon": "nodemon --watch ./server ./server/app.js",
     "start": "node ./server/app.js",
@@ -49,6 +49,7 @@
     "mongoose": "^5.9.5",
     "redis": "^3.0.2",
     "serve-favicon": "^2.5.0",
+    "socket.io": "^4.0.1",
     "underscore": "^1.9.2"
   }
 }

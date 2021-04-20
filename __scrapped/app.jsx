@@ -84,9 +84,15 @@ const loadDomosFromServer = (csrf) => {
 
 // Init
 const init = () => {
-    let socket = io('localhost:3000');
+    ReactDOM.render(
+        <DomoForm csrf={csrf} />,
+        document.querySelector("#makeDomo")
+    );
 
-    socket.on('messageALL', obj => {
-        console.log(obj);
-    });
+    ReactDOM.render(
+        <DomoList domos={[]} csrf={csrf} />,
+        document.querySelector("#domos")
+    );
+
+    loadDomosFromServer(csrf);
 };
