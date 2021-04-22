@@ -1,123 +1,244 @@
 "use strict";
 
-// Functionalities
-var handleDomo = function handleDomo(e, csrf) {
-  e.preventDefault();
-  $("#domoMessage").animate({
-    width: 'hide'
-  }, 350);
-
-  if ($("#domoName").val() == '' || $("#domoAge").val() == '' || $("#domoSize").val() == '') {
-    handleError("RAWR! All fields are required");
-    return false;
-  }
-
-  sendAjax('POST', $("#domoForm").attr("action"), $("#domoForm").serialize(), function () {
-    loadDomosFromServer(csrf);
-  });
-  return false;
-};
-
-var handleDomoDelete = function handleDomoDelete(e, id, csrf) {
-  sendAjax('DELETE', "/deleteDomo?id=".concat(id), "_csrf=".concat(csrf), function () {
-    loadDomosFromServer(csrf);
-  });
-}; // React components
-
-
-var DomoForm = function DomoForm(props) {
-  return /*#__PURE__*/React.createElement("form", {
-    id: "domoForm",
-    onSubmit: function onSubmit(e) {
-      return handleDomo(e, props.csrf);
-    },
-    name: "domoForm",
-    action: "/maker",
-    method: "POST",
-    className: "domoForm"
-  }, /*#__PURE__*/React.createElement("label", {
-    htmlFor: "name"
-  }, "Name: "), /*#__PURE__*/React.createElement("input", {
-    id: "domoName",
-    type: "text",
-    name: "name",
-    placeholder: "Domo Name"
-  }), /*#__PURE__*/React.createElement("label", {
-    htmlFor: "age"
-  }, "Age: "), /*#__PURE__*/React.createElement("input", {
-    id: "domoAge",
-    type: "text",
-    name: "age",
-    placeholder: "Domo Age"
-  }), /*#__PURE__*/React.createElement("label", {
-    htmlFor: "size"
-  }, "Size: "), /*#__PURE__*/React.createElement("input", {
-    id: "domoSize",
-    type: "text",
-    name: "size",
-    placeholder: "Domo Size"
-  }), /*#__PURE__*/React.createElement("input", {
-    type: "hidden",
-    name: "_csrf",
-    value: props.csrf
-  }), /*#__PURE__*/React.createElement("input", {
-    className: "makeDomoSubmit",
-    type: "submit",
-    value: "Make Domo"
-  }));
-};
-
-var DomoList = function DomoList(props) {
-  if (props.domos.length === 0) {
-    return /*#__PURE__*/React.createElement("div", {
-      className: "domoList"
-    }, /*#__PURE__*/React.createElement("h3", {
-      className: "emptyDomo"
-    }, "No Domos yet"));
-  }
-
-  var domoNodes = props.domos.map(function (domo) {
-    return /*#__PURE__*/React.createElement("div", {
-      key: domo._id,
-      className: "domo"
-    }, /*#__PURE__*/React.createElement("img", {
-      src: "/assets/img/domoface.jpeg",
-      alt: "domo face",
-      className: "domoFace"
-    }), /*#__PURE__*/React.createElement("h3", {
-      className: "domoName"
-    }, "Name: ", domo.name), /*#__PURE__*/React.createElement("h3", {
-      className: "domoAge"
-    }, "Age: ", domo.age), /*#__PURE__*/React.createElement("h3", {
-      className: "domoSize"
-    }, "Size: ", domo.size), /*#__PURE__*/React.createElement("button", {
-      className: "domoDelete",
-      onClick: function onClick(e) {
-        return handleDomoDelete(e, domo._id, props.csrf);
-      }
-    }, "Delete"));
-  });
-  return /*#__PURE__*/React.createElement("div", {
-    className: "domoList"
-  }, domoNodes);
-}; // React component factories
-
-
-var loadDomosFromServer = function loadDomosFromServer(csrf) {
-  sendAjax('GET', '/getDomos', "_csrf=".concat(csrf), function (data) {
-    ReactDOM.render( /*#__PURE__*/React.createElement(DomoList, {
-      domos: data.domos,
-      csrf: csrf
-    }), document.querySelector("#domos"));
-  });
-}; // Init
-
+var socket; // Client connection socket
+// Init
 
 var init = function init() {
-  var socket = io('localhost:3000');
-  socket.on('messageALL', function (obj) {
-    console.log(obj);
+  // Connect to the base URL
+  socket = io(window.location.origin);
+  socket.on('message', function (data) {
+    updateChat(data);
   });
+  sendRequest('GET', '/account', null, function (account) {
+    socket.emit('account', {
+      account: account
+    });
+  }); // DOM Events
+
+  var accountButton = document.querySelector("#accountButton");
+  accountButton.addEventListener('click', function (e) {
+    e.preventDefault();
+    createAccountWindow();
+  });
+  var gamesButton = document.querySelector("#gamesButton");
+  gamesButton.addEventListener('click', function (e) {
+    e.preventDefault();
+    createGameList();
+  }); // Default View
+
+  createGameList();
+};
+"use strict";
+
+// React Components
+var AccountWindow = function AccountWindow(props) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "accountWindow"
+  }, /*#__PURE__*/React.createElement("h1", null, "Account"), /*#__PURE__*/React.createElement("div", {
+    className: "info"
+  }, /*#__PURE__*/React.createElement("label", {
+    htmlFor: "username"
+  }, "Username:"), /*#__PURE__*/React.createElement("p", {
+    className: "username"
+  }, props.account.username), /*#__PURE__*/React.createElement("label", {
+    htmlFor: "gamesPlayed"
+  }, "Games Played:"), /*#__PURE__*/React.createElement("p", {
+    className: "gamesPlayed"
+  }, props.account.gamesPlayed), /*#__PURE__*/React.createElement("label", {
+    htmlFor: "wonLost"
+  }, "Won/Lost:"), /*#__PURE__*/React.createElement("p", {
+    className: "wonLost"
+  }, props.account.gamesWon, "/", props.account.gamesLost)));
+};
+
+var GameList = function GameList(props) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "gameList"
+  }, /*#__PURE__*/React.createElement("h1", null, "Game List"), /*#__PURE__*/React.createElement("table", null, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Room Name"), /*#__PURE__*/React.createElement("th", null, "Creator Username"), /*#__PURE__*/React.createElement("th", null, "State"), /*#__PURE__*/React.createElement("th", null, "Turn"), /*#__PURE__*/React.createElement("th", null, "Join"))), /*#__PURE__*/React.createElement("tbody", null, props.rooms.map(function (room) {
+    return /*#__PURE__*/React.createElement("tr", {
+      key: room._id
+    }, /*#__PURE__*/React.createElement("th", null, room.name), /*#__PURE__*/React.createElement("th", null, room.creatorUsername), /*#__PURE__*/React.createElement("th", null, room.state), /*#__PURE__*/React.createElement("th", null, room.turn), /*#__PURE__*/React.createElement("th", null, /*#__PURE__*/React.createElement("button", {
+      className: "btnJoin",
+      onClick: function onClick(e) {
+        return handleJoin(e, room._id);
+      }
+    }, "Join")));
+  }))));
+};
+
+var TTTGrid = function TTTGrid(props) {
+  return /*#__PURE__*/React.createElement("table", {
+    className: "tttGrid"
+  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+    className: "tttCell"
+  }, /*#__PURE__*/React.createElement("button", null)), /*#__PURE__*/React.createElement("th", {
+    className: "tttCell"
+  }, /*#__PURE__*/React.createElement("button", null)), /*#__PURE__*/React.createElement("th", {
+    className: "tttCell"
+  }, /*#__PURE__*/React.createElement("button", null))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+    className: "tttCell"
+  }, /*#__PURE__*/React.createElement("button", null)), /*#__PURE__*/React.createElement("th", {
+    className: "tttCell"
+  }, /*#__PURE__*/React.createElement("button", null)), /*#__PURE__*/React.createElement("th", {
+    className: "tttCell"
+  }, /*#__PURE__*/React.createElement("button", null))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+    className: "tttCell"
+  }, /*#__PURE__*/React.createElement("button", null)), /*#__PURE__*/React.createElement("th", {
+    className: "tttCell"
+  }, /*#__PURE__*/React.createElement("button", null)), /*#__PURE__*/React.createElement("th", {
+    className: "tttCell"
+  }, /*#__PURE__*/React.createElement("button", null)))));
+};
+
+var UTTTGrid = function UTTTGrid(props) {
+  return /*#__PURE__*/React.createElement("table", {
+    className: "utttGrid"
+  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+    className: "utttCell"
+  }, /*#__PURE__*/React.createElement(TTTGrid, null)), /*#__PURE__*/React.createElement("th", {
+    className: "utttCell"
+  }, /*#__PURE__*/React.createElement(TTTGrid, null)), /*#__PURE__*/React.createElement("th", {
+    className: "utttCell"
+  }, /*#__PURE__*/React.createElement(TTTGrid, null))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+    className: "utttCell"
+  }, /*#__PURE__*/React.createElement(TTTGrid, null)), /*#__PURE__*/React.createElement("th", {
+    className: "utttCell"
+  }, /*#__PURE__*/React.createElement(TTTGrid, null)), /*#__PURE__*/React.createElement("th", {
+    className: "utttCell"
+  }, /*#__PURE__*/React.createElement(TTTGrid, null))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+    className: "utttCell"
+  }, /*#__PURE__*/React.createElement(TTTGrid, null)), /*#__PURE__*/React.createElement("th", {
+    className: "utttCell"
+  }, /*#__PURE__*/React.createElement(TTTGrid, null)), /*#__PURE__*/React.createElement("th", {
+    className: "utttCell"
+  }, /*#__PURE__*/React.createElement(TTTGrid, null)))));
+};
+
+var Chat = function Chat(props) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "chat"
+  }, /*#__PURE__*/React.createElement("ul", null), /*#__PURE__*/React.createElement("input", {
+    type: "text",
+    name: "message",
+    id: "textMessage",
+    onKeyPress: handleKeypressSend
+  }), /*#__PURE__*/React.createElement("button", {
+    id: "btnSendMessage",
+    onClick: handleSend
+  }, "Send"));
+};
+
+var Game = function Game(props) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "game"
+  }, /*#__PURE__*/React.createElement("h1", null, "Game"), /*#__PURE__*/React.createElement(UTTTGrid, null), /*#__PURE__*/React.createElement("button", {
+    id: "btnSurrender",
+    onClick: handleSurrender
+  }, "Surrender"), /*#__PURE__*/React.createElement("button", {
+    id: "btnLeaveRoom",
+    onClick: handleLeave
+  }, "Leave"), /*#__PURE__*/React.createElement("h1", null, "Chat"), /*#__PURE__*/React.createElement(Chat, null));
+};
+"use strict";
+
+// React component factories
+var createAccountWindow = function createAccountWindow() {
+  // sendAjax('GET', '/getAccount', null, (data) => {
+  //     ReactDOM.render(
+  //         <AccountWindow account={data.account} />,
+  //         document.querySelector("#content")
+  //     );
+  // });
+  ReactDOM.render( /*#__PURE__*/React.createElement(AccountWindow, {
+    account: {
+      username: 'testUsername',
+      gamesPlayed: 10,
+      gamesWon: 6,
+      gamesLost: 4
+    }
+  }), document.querySelector("#content"));
+};
+
+var createGameList = function createGameList() {
+  // sendAjax('GET', '/getRooms', null, (data) => {
+  //     ReactDOM.render(
+  //         <GameList rooms={data.rooms} />,
+  //         document.querySelector("#content")
+  //     );
+  // });
+  ReactDOM.render( /*#__PURE__*/React.createElement(GameList, {
+    rooms: [{
+      _id: '54elkjh3kljh34kj5h',
+      name: 'testName',
+      creatorUsername: 'testUsername',
+      state: 'Waiting',
+      turn: 0
+    }]
+  }), document.querySelector("#content"));
+};
+
+var createGame = function createGame() {
+  ReactDOM.render( /*#__PURE__*/React.createElement(Game, null), document.querySelector("#content"));
+};
+"use strict";
+
+// Functionalities
+// Function to join a UTTT room/game
+var handleJoin = function handleJoin(e, roomID) {
+  socket.emit('joinRoom', {
+    id: roomID
+  });
+  createGame();
+}; // Function to send a message in a UTTT room chat
+
+
+var handleSend = function handleSend(e) {
+  var input = document.querySelector("#textMessage");
+
+  if (input.value !== '') {
+    socket.emit('message', {
+      text: input.value
+    });
+    input.value = '';
+  }
+}; // Function to send a message when Enter is pressed
+
+
+var handleKeypressSend = function handleKeypressSend(e) {
+  // Enter
+  if (e.which == '13') {
+    handleSend(e);
+  }
+}; // Function for player to take turn and play in a cell
+
+
+var handleTurn = function handleTurn(e, utttCell, tttCell) {
+  socket.emit('turn', {
+    utttCell: utttCell,
+    tttCell: tttCell
+  });
+}; // Function to flag that player has surrendered
+
+
+var handleSurrender = function handleSurrender(e) {
+  socket.emit('surrender');
+}; // Function to leave a room
+
+
+var handleLeave = function handleLeave(e) {
+  socket.emit('leaveRoom');
+  createGameList();
+}; // Function to add new message to chat
+
+
+var updateChat = function updateChat(data) {
+  var chat = document.querySelector(".chat ul");
+
+  if (chat) {
+    var message = document.createElement("li");
+    message.innerHTML = "<b>".concat(data.username, "</b>: ").concat(data.text);
+    chat.appendChild(message);
+  }
 };
 "use strict";
 

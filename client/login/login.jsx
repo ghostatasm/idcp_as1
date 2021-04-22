@@ -68,7 +68,7 @@ const SignupWindow = (props) => {
 };
 
 // React component factories
-const createLoginWIndow = () => {
+const createLoginWindow = () => {
     ReactDOM.render(
         <LoginWindow csrf={csrf} />,
         document.querySelector("#content")
@@ -95,9 +95,10 @@ const init = () => {
 
     loginButton.addEventListener("click", (e) => {
         e.preventDefault();
-        createLoginWIndow();
+        createLoginWindow();
         return false;
     });
 
-    createLoginWIndow(); // default view
+    // Default View
+    createLoginWindow();
 };

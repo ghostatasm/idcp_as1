@@ -58,7 +58,7 @@ const signup = (req, res) => {
 
     const newAccount = new AccountModel(accountData);
 
-    newAccount.save((err, doc) => {
+    newAccount.save((err) => {
       if (err) {
         console.log(err);
 
@@ -69,17 +69,71 @@ const signup = (req, res) => {
         return res.status(400).json({ error: 'An error ocurred creating the account' });
       }
 
-      // Set session account cookie
-      req.session.account = AccountModel.toAPI(doc);
-
-      // Return redirect
-      return res.json({ redirect: '/app' });
+      return logout(req, res);
     });
   });
+};
+
+const resetPassword = (req, res) => {
+  req.body.pass = `${req.body.pass}`;
+  req.body.pass2 = `${req.body.pass2}`;
+
+  if (req.body.pass !== req.body.pass2) {
+    return res.status(400).json({ error: 'Passwords do not match' });
+  }
+
+  // If there is an account in session
+  if (req.session.account) {
+    return AccountModel.findOneByUsername(req.session.account.username, (findErr, doc) => {
+      if (findErr) {
+        console.log(findErr);
+        return res.status(500).json({ error: 'An error ocurred retrieving your account' });
+      }
+
+      if (!doc) {
+        return res.status(400).json({ error: 'No account found with the username specified' });
+      }
+
+      return AccountModel.generateHash(req.body.pass, (salt, hash) => {
+        const docEdit = doc;
+
+        docEdit.salt = salt;
+        docEdit.password = hash;
+
+        doc.save((saveErr) => {
+          if (saveErr) {
+            console.log(saveErr);
+
+            return res.status(400).json({ error: 'An error ocurred updating your password' });
+          }
+
+          req.session.destroy();
+
+          // Return redirect
+          return res.json({ redirect: '/' });
+        });
+      });
+    });
+  }
+
+  return res.status(400).json({ error: 'No account found in session' });
+};
+
+const account = (req, res) => {
+  // If there is an account in session
+  if (req.session.account) {
+    // Send it
+    return res.json(req.session.account);
+  }
+
+  // Otherwise return an error
+  return res.status(400).json({ error: 'No account found in session' });
 };
 
 module.exports = {
   logout,
   login,
   signup,
+  resetPassword,
+  account,
 };

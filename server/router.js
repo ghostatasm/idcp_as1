@@ -12,6 +12,8 @@ const router = (app) => {
   app.post('/login', mid.requiresSecure, mid.requiresLogout, controllers.Account.login); // handle login request
   app.post('/signup', mid.requiresSecure, mid.requiresLogout, controllers.Account.signup); // handle signup request
   app.get('/logout', mid.requiresLogin, controllers.Account.logout); // handle logout request
+  app.put('/resetPassword', mid.requiresSecure, mid.requiresLogin, controllers.Account.resetPassword);
+  app.get('/account', mid.requiresSecure, mid.requiresLogin, controllers.Account.account); // send account info
 
   // Index
   app.get('/', mid.requiresSecure, mid.requiresLogout, pages.loginPage);

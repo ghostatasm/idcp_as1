@@ -11,34 +11,63 @@ const start = (server) => {
 
   // Public events
   sockets.on('connect', (socket) => {
-    console.log(`CONNECTED: socket ${socket.id}`);
-
-    const newMSG = {
-      date: new Date().toLocaleDateString(),
-      msg: `CONNECTED: socket ${socket.id}`,
-    };
-    io.sockets.emit('messageALL', newMSG); // send msg to all sockets
-
-    // Socket events
-    socket.on('disconnect', () => {
-      console.log(`DISCONNECTED: socket ${socket.id}`);
-    });
-
+    // Individual socket events
     socket.on('error', (err) => {
-      console.log(`ERROR: socket ${socket.id}, error: ${err}`);
+      console.log(`ERROR: socket ${socket.id} - Error: ${err}`);
     });
 
-    socket.on('message', (msg) => {
-      console.log('MESSAGE:', msg);
-      const obj = msg;
-      obj.date = new Date().toLocaleTimeString();
-      socket.broadcast.emit('message', obj); // broadcast it to everyone else
+    socket.on('account', (accountData) => {
+      const { account } = accountData;
+
+      socket.on('joinRoom', (roomData) => {
+        const roomID = roomData.id;
+        const room = sockets.to(`room:${roomID}`);
+
+        socket.join(`room:${roomID}`);
+
+        room.emit('message', {
+          text: `${account.username} has joined the room`,
+          date: new Date().toLocaleTimeString(),
+          username: 'server',
+        });
+
+        // Room events
+        socket.on('disconnect', () => {
+          room.emit('message', {
+            text: `${account.username} has left the room`,
+            date: new Date().toLocaleTimeString(),
+            username: 'server',
+          });
+        });
+
+        socket.on('leaveRoom', () => {
+          room.emit('message', {
+            text: `${account.username} has left the room`,
+            date: new Date().toLocaleTimeString(),
+            username: 'server',
+          });
+        });
+
+        socket.on('turn', (turnData) => {
+          // TODO
+          console.log(turnData);
+        });
+
+        socket.on('message', (msg) => {
+          const obj = msg;
+          obj.date = new Date().toLocaleTimeString();
+          obj.username = account.username;
+          room.emit('message', obj);
+        });
+
+        socket.on('surrender', () => {
+          // TODO
+        });
+      });
     });
   });
 
   return io;
 };
 
-module.exports = {
-  start,
-};
+module.exports = start;

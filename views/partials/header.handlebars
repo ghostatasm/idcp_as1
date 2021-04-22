@@ -2,6 +2,8 @@
     <a href="/"><img id="logo" src="/assets/img/logo.png" alt="logo" /></a>
     <nav>
         {{#if loggedin}}
+        <a id="accountButton" href="/account">Account</a>
+        <a id="gamesButton" href="/games">Games</a>
         <a id="logoutButton" href="/logout">Log out</a>
         {{else}}
         <a id="loginButton" href="/login">Login</a>

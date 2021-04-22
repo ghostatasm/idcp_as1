@@ -1,83 +1,83 @@
 // Functionalities
-const handleDomo = (e, csrf) => {
+const handle = (e, csrf) => {
     e.preventDefault();
 
-    $("#domoMessage").animate({ width: 'hide' }, 350);
+    $("#Message").animate({ width: 'hide' }, 350);
 
-    if ($("#domoName").val() == '' || $("#domoAge").val() == '' || $("#domoSize").val() == '') {
+    if ($("#Name").val() == '' || $("#Age").val() == '' || $("#Size").val() == '') {
         handleError("RAWR! All fields are required");
         return false;
     }
 
-    sendAjax('POST', $("#domoForm").attr("action"), $("#domoForm").serialize(), () => {
-        loadDomosFromServer(csrf);
+    sendAjax('POST', $("#Form").attr("action"), $("#Form").serialize(), () => {
+        loadsFromServer(csrf);
     });
 
     return false;
 };
 
-const handleDomoDelete = (e, id, csrf) => {
-    sendAjax('DELETE', `/deleteDomo?id=${id}`, `_csrf=${csrf}`, () => {
-        loadDomosFromServer(csrf);
+const handleDelete = (e, id, csrf) => {
+    sendAjax('DELETE', `/delete?id=${id}`, `_csrf=${csrf}`, () => {
+        loadsFromServer(csrf);
     });
 }
 
 // React components
-const DomoForm = (props) => {
+const Form = (props) => {
     return (
-        <form id="domoForm"
-            onSubmit={(e) => handleDomo(e, props.csrf)}
-            name="domoForm"
+        <form id="Form"
+            onSubmit={(e) => handle(e, props.csrf)}
+            name="Form"
             action="/maker"
             method="POST"
-            className="domoForm"
+            className="Form"
         >
             <label htmlFor="name">Name: </label>
-            <input id="domoName" type="text" name="name" placeholder="Domo Name" />
+            <input id="Name" type="text" name="name" placeholder=" Name" />
             <label htmlFor="age">Age: </label>
-            <input id="domoAge" type="text" name="age" placeholder="Domo Age" />
+            <input id="Age" type="text" name="age" placeholder=" Age" />
             <label htmlFor="size">Size: </label>
-            <input id="domoSize" type="text" name="size" placeholder="Domo Size" />
+            <input id="Size" type="text" name="size" placeholder=" Size" />
             <input type="hidden" name="_csrf" value={props.csrf} />
-            <input className="makeDomoSubmit" type="submit" value="Make Domo" />
+            <input className="makeSubmit" type="submit" value="Make " />
         </form>
     );
 };
 
-const DomoList = (props) => {
-    if (props.domos.length === 0) {
+const List = (props) => {
+    if (props.s.length === 0) {
         return (
-            <div className="domoList">
-                <h3 className="emptyDomo">No Domos yet</h3>
+            <div className="List">
+                <h3 className="empty">No s yet</h3>
             </div>
         );
     }
 
-    const domoNodes = props.domos.map((domo) => {
+    const Nodes = props.s.map(() => {
         return (
-            <div key={domo._id} className="domo">
-                <img src="/assets/img/domoface.jpeg" alt="domo face" className="domoFace" />
-                <h3 className="domoName">Name: {domo.name}</h3>
-                <h3 className="domoAge">Age: {domo.age}</h3>
-                <h3 className="domoSize">Size: {domo.size}</h3>
-                <button className="domoDelete" onClick={(e) => handleDomoDelete(e, domo._id, props.csrf)}>Delete</button>
+            <div key={._id} className="">
+                <img src="/assets/img/face.jpeg" alt=" face" className="Face" />
+                <h3 className="Name">Name: {.name}</h3>
+                <h3 className="Age">Age: {.age}</h3>
+                <h3 className="Size">Size: {.size}</h3>
+                <button className="Delete" onClick={(e) => handleDelete(e, ._id, props.csrf)}>Delete</button>
             </div>
         );
     });
 
     return (
-        <div className="domoList">
-            {domoNodes}
+        <div className="List">
+            {Nodes}
         </div>
     );
 };
 
 // React component factories
-const loadDomosFromServer = (csrf) => {
-    sendAjax('GET', '/getDomos', `_csrf=${csrf}`, (data) => {
+const loadsFromServer = (csrf) => {
+    sendAjax('GET', '/gets', `_csrf=${csrf}`, (data) => {
         ReactDOM.render(
-            <DomoList domos={data.domos} csrf={csrf} />,
-            document.querySelector("#domos")
+            <List s={data.s} csrf={csrf} />,
+            document.querySelector("#s")
         );
     });
 };
@@ -85,14 +85,14 @@ const loadDomosFromServer = (csrf) => {
 // Init
 const init = () => {
     ReactDOM.render(
-        <DomoForm csrf={csrf} />,
-        document.querySelector("#makeDomo")
+        <Form csrf={csrf} />,
+        document.querySelector("#make")
     );
 
     ReactDOM.render(
-        <DomoList domos={[]} csrf={csrf} />,
-        document.querySelector("#domos")
+        <List s={[]} csrf={csrf} />,
+        document.querySelector("#s")
     );
 
-    loadDomosFromServer(csrf);
+    loadsFromServer(csrf);
 };

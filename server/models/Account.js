@@ -48,9 +48,9 @@ AccountSchema.statics.toAPI = (doc) => ({
   _id: doc._id,
 });
 
-AccountSchema.statics.findOneByUsername = (name, callback) => {
+AccountSchema.statics.findOneByUsername = (username, callback) => {
   const search = {
-    username: name,
+    username,
   };
 
   return AccountModel.findOne(search, callback);
