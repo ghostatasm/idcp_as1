@@ -1,0 +1,39 @@
+.utttGrid {
+    display: block;
+    aspect-ratio: 1 / 1;
+}
+
+.utttGrid tbody {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-row-gap: 4%;
+}
+
+.utttGrid tbody tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-column-gap: 4%;
+}
+
+.tttGrid {
+    width: 100%;
+    height: 100%;
+}
+
+.tttGrid tbody {
+    width: 100%;
+    height: 100%;
+    display: grid;
+}
+
+.tttGrid tbody tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.tttCell button {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+}

@@ -32,3 +32,7 @@ Example endpoint documentation:
 ## Sources
 
 // https://stackoverflow.com/questions/39786337/how-to-convert-js-object-data-to-x-www-form-urlencoded
+
+https://www.flaticon.com/free-icon/tic-tac-toe_1073293
+
+https://www.flaticon.com/free-icon/tic-tac-toe_1073242

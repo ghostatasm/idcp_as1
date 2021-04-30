@@ -9,6 +9,11 @@ const init = () => {
         updateChat(data);
     });
 
+    socket.on('turn', data => {
+        console.log(data);
+        updateBoard(data.board);
+    });
+
     sendRequest('GET', '/account', null, account => {
         socket.emit('account', {
             account,

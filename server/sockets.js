@@ -1,5 +1,7 @@
 const socketIO = require('socket.io');
 
+const { Message } = require('./classes');
+
 /**
  * Starts socket.io WebSockets and returns the socket
  * @param {Object} server - Your Express server (returned from .listen
@@ -9,59 +11,73 @@ const start = (server) => {
   const io = socketIO(server);
   const { sockets } = io;
 
-  // Public events
+  // On socket connected
   sockets.on('connect', (socket) => {
     // Individual socket events
     socket.on('error', (err) => {
       console.log(`ERROR: socket ${socket.id} - Error: ${err}`);
     });
 
+    // On account received
     socket.on('account', (accountData) => {
       const { account } = accountData;
 
+      // On socket joined a room
       socket.on('joinRoom', (roomData) => {
-        const roomID = roomData.id;
-        const room = sockets.to(`room:${roomID}`);
+        const { _id, creator, opponent } = roomData;
+        const roomSocketName = `ROOM:${_id}`; // Room string identifier
+        const room = sockets.to(roomSocketName); // Room Emitter
 
-        socket.join(`room:${roomID}`);
+        socket.join(roomSocketName);
 
-        room.emit('message', {
-          text: `${account.username} has joined the room`,
-          date: new Date().toLocaleTimeString(),
-          username: 'server',
-        });
+        room.emit('message', new Message(
+          'server',
+          `${account.username} has joined the room`,
+        ));
 
         // Room events
         socket.on('disconnect', () => {
-          room.emit('message', {
-            text: `${account.username} has left the room`,
-            date: new Date().toLocaleTimeString(),
-            username: 'server',
-          });
+          socket.leave(roomSocketName);
+
+          room.emit('message', new Message(
+            'server',
+            `${account.username} has left the room`,
+          ));
         });
 
         socket.on('leaveRoom', () => {
-          room.emit('message', {
-            text: `${account.username} has left the room`,
-            date: new Date().toLocaleTimeString(),
-            username: 'server',
+          socket.leave(roomSocketName);
+
+          room.emit('message', new Message(
+            'server',
+            `${account.username} has left the room`,
+          ));
+        });
+
+        // Game Events
+        socket.on('turn', (turnData) => {
+          room.emit('turn', turnData);
+        });
+
+        socket.on('surrender', (surrenderData) => {
+          room.emit('gameover', {
+            // Return the opposite player from the one who surrendered
+            winner: surrenderData.username === creator ? opponent : creator,
           });
         });
 
-        socket.on('turn', (turnData) => {
-          // TODO
-          console.log(turnData);
+        socket.on('winner', (winnerData) => {
+          room.emit('gameover', {
+            winner: winnerData.winner,
+          });
         });
 
+        // Chat Events
         socket.on('message', (msg) => {
-          const obj = msg;
-          obj.date = new Date().toLocaleTimeString();
-          obj.username = account.username;
-          room.emit('message', obj);
-        });
-
-        socket.on('surrender', () => {
-          // TODO
+          room.emit('message', new Message(
+            account.username,
+            msg.text,
+          ));
         });
       });
     });

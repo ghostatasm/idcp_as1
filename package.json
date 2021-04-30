@@ -6,15 +6,15 @@
     "npm": ">=6.13.7"
   },
   "description": "A networked service for playing Ultimate Tic Tac Toe over the web",
-  "main": "./server/app.js",
+  "main": "./server/server.js",
   "scripts": {
     "buildLogin": "babel ./client/login ./client/helper --presets @babel/preset-react --out-file ./hosted/loginBundle.js",
     "buildApp": "babel ./client/app ./client/helper --presets @babel/preset-react --out-file ./hosted/appBundle.js",
     "watchLogin": "babel --watch ./client/login ./client/helper --presets @babel/preset-react --out-file ./hosted/loginBundle.js",
     "watchApp": "babel --watch ./client/app ./client/helper --presets @babel/preset-react --out-file ./hosted/appBundle.js",
     "build": "npm run buildLogin && npm run buildApp",
-    "nodemon": "nodemon --watch ./server ./server/app.js",
-    "start": "node ./server/app.js",
+    "nodemon": "nodemon --watch ./server ./server/server.js",
+    "start": "node ./server/server.js",
     "pretest": "eslint ./server --fix",
     "test": "echo \"Tests complete\""
   },

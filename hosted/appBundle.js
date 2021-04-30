@@ -9,6 +9,10 @@ var init = function init() {
   socket.on('message', function (data) {
     updateChat(data);
   });
+  socket.on('turn', function (data) {
+    console.log(data);
+    updateBoard(data.board);
+  });
   sendRequest('GET', '/account', null, function (account) {
     socket.emit('account', {
       account: account
@@ -54,10 +58,28 @@ var AccountWindow = function AccountWindow(props) {
 var GameList = function GameList(props) {
   return /*#__PURE__*/React.createElement("div", {
     className: "gameList"
-  }, /*#__PURE__*/React.createElement("h1", null, "Game List"), /*#__PURE__*/React.createElement("table", null, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Room Name"), /*#__PURE__*/React.createElement("th", null, "Creator Username"), /*#__PURE__*/React.createElement("th", null, "State"), /*#__PURE__*/React.createElement("th", null, "Turn"), /*#__PURE__*/React.createElement("th", null, "Join"))), /*#__PURE__*/React.createElement("tbody", null, props.rooms.map(function (room) {
+  }, /*#__PURE__*/React.createElement("h1", null, "Games"), /*#__PURE__*/React.createElement("form", {
+    action: "/create",
+    method: "post",
+    onSubmit: handleCreate,
+    id: "createForm"
+  }, /*#__PURE__*/React.createElement("label", {
+    htmlFor: "name"
+  }, "Room Name:"), /*#__PURE__*/React.createElement("input", {
+    type: "text",
+    name: "name",
+    id: "roomName"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "hidden",
+    name: "_csrf",
+    value: props.csrf
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "submit",
+    value: "Create Room"
+  })), /*#__PURE__*/React.createElement("table", null, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Room Name"), /*#__PURE__*/React.createElement("th", null, "Creator"), /*#__PURE__*/React.createElement("th", null, "State"), /*#__PURE__*/React.createElement("th", null, "Turn"), /*#__PURE__*/React.createElement("th", null, "Join"))), /*#__PURE__*/React.createElement("tbody", null, props.rooms.map(function (room) {
     return /*#__PURE__*/React.createElement("tr", {
       key: room._id
-    }, /*#__PURE__*/React.createElement("th", null, room.name), /*#__PURE__*/React.createElement("th", null, room.creatorUsername), /*#__PURE__*/React.createElement("th", null, room.state), /*#__PURE__*/React.createElement("th", null, room.turn), /*#__PURE__*/React.createElement("th", null, /*#__PURE__*/React.createElement("button", {
+    }, /*#__PURE__*/React.createElement("th", null, room.name), /*#__PURE__*/React.createElement("th", null, room.creator), /*#__PURE__*/React.createElement("th", null, room.opponent ? 'Playing' : 'Waiting'), /*#__PURE__*/React.createElement("th", null, room.turn), /*#__PURE__*/React.createElement("th", null, /*#__PURE__*/React.createElement("button", {
       className: "btnJoin",
       onClick: function onClick(e) {
         return handleJoin(e, room._id);
@@ -71,23 +93,59 @@ var TTTGrid = function TTTGrid(props) {
     className: "tttGrid"
   }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
     className: "tttCell"
-  }, /*#__PURE__*/React.createElement("button", null)), /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick(e) {
+      return handleTurn(e, props.utttcell, 0);
+    }
+  }, props.board[0])), /*#__PURE__*/React.createElement("th", {
     className: "tttCell"
-  }, /*#__PURE__*/React.createElement("button", null)), /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick(e) {
+      return handleTurn(e, props.utttcell, 1);
+    }
+  }, props.board[1])), /*#__PURE__*/React.createElement("th", {
     className: "tttCell"
-  }, /*#__PURE__*/React.createElement("button", null))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick(e) {
+      return handleTurn(e, props.utttcell, 2);
+    }
+  }, props.board[2]))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
     className: "tttCell"
-  }, /*#__PURE__*/React.createElement("button", null)), /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick(e) {
+      return handleTurn(e, props.utttcell, 3);
+    }
+  }, props.board[3])), /*#__PURE__*/React.createElement("th", {
     className: "tttCell"
-  }, /*#__PURE__*/React.createElement("button", null)), /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick(e) {
+      return handleTurn(e, props.utttcell, 4);
+    }
+  }, props.board[4])), /*#__PURE__*/React.createElement("th", {
     className: "tttCell"
-  }, /*#__PURE__*/React.createElement("button", null))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick(e) {
+      return handleTurn(e, props.utttcell, 5);
+    }
+  }, props.board[5]))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
     className: "tttCell"
-  }, /*#__PURE__*/React.createElement("button", null)), /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick(e) {
+      return handleTurn(e, props.utttcell, 6);
+    }
+  }, props.board[6])), /*#__PURE__*/React.createElement("th", {
     className: "tttCell"
-  }, /*#__PURE__*/React.createElement("button", null)), /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick(e) {
+      return handleTurn(e, props.utttcell, 7);
+    }
+  }, props.board[7])), /*#__PURE__*/React.createElement("th", {
     className: "tttCell"
-  }, /*#__PURE__*/React.createElement("button", null)))));
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick(e) {
+      return handleTurn(e, props.utttcell, 8);
+    }
+  }, props.board[8])))));
 };
 
 var UTTTGrid = function UTTTGrid(props) {
@@ -95,23 +153,50 @@ var UTTTGrid = function UTTTGrid(props) {
     className: "utttGrid"
   }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
     className: "utttCell"
-  }, /*#__PURE__*/React.createElement(TTTGrid, null)), /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement(TTTGrid, {
+    utttcell: 0,
+    board: props.board[0]
+  })), /*#__PURE__*/React.createElement("th", {
     className: "utttCell"
-  }, /*#__PURE__*/React.createElement(TTTGrid, null)), /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement(TTTGrid, {
+    utttcell: 1,
+    board: props.board[1]
+  })), /*#__PURE__*/React.createElement("th", {
     className: "utttCell"
-  }, /*#__PURE__*/React.createElement(TTTGrid, null))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement(TTTGrid, {
+    utttcell: 2,
+    board: props.board[2]
+  }))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
     className: "utttCell"
-  }, /*#__PURE__*/React.createElement(TTTGrid, null)), /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement(TTTGrid, {
+    utttcell: 3,
+    board: props.board[3]
+  })), /*#__PURE__*/React.createElement("th", {
     className: "utttCell"
-  }, /*#__PURE__*/React.createElement(TTTGrid, null)), /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement(TTTGrid, {
+    utttcell: 4,
+    board: props.board[4]
+  })), /*#__PURE__*/React.createElement("th", {
     className: "utttCell"
-  }, /*#__PURE__*/React.createElement(TTTGrid, null))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement(TTTGrid, {
+    utttcell: 5,
+    board: props.board[5]
+  }))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
     className: "utttCell"
-  }, /*#__PURE__*/React.createElement(TTTGrid, null)), /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement(TTTGrid, {
+    utttcell: 6,
+    board: props.board[6]
+  })), /*#__PURE__*/React.createElement("th", {
     className: "utttCell"
-  }, /*#__PURE__*/React.createElement(TTTGrid, null)), /*#__PURE__*/React.createElement("th", {
+  }, /*#__PURE__*/React.createElement(TTTGrid, {
+    utttcell: 7,
+    board: props.board[7]
+  })), /*#__PURE__*/React.createElement("th", {
     className: "utttCell"
-  }, /*#__PURE__*/React.createElement(TTTGrid, null)))));
+  }, /*#__PURE__*/React.createElement(TTTGrid, {
+    utttcell: 8,
+    board: props.board[8]
+  })))));
 };
 
 var Chat = function Chat(props) {
@@ -131,7 +216,11 @@ var Chat = function Chat(props) {
 var Game = function Game(props) {
   return /*#__PURE__*/React.createElement("div", {
     className: "game"
-  }, /*#__PURE__*/React.createElement("h1", null, "Game"), /*#__PURE__*/React.createElement(UTTTGrid, null), /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("h1", null, "Game"), /*#__PURE__*/React.createElement("div", {
+    className: "board"
+  }, /*#__PURE__*/React.createElement(UTTTGrid, {
+    board: [[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']]
+  })), /*#__PURE__*/React.createElement("button", {
     id: "btnSurrender",
     onClick: handleSurrender
   }, "Surrender"), /*#__PURE__*/React.createElement("button", {
@@ -143,38 +232,20 @@ var Game = function Game(props) {
 
 // React component factories
 var createAccountWindow = function createAccountWindow() {
-  // sendAjax('GET', '/getAccount', null, (data) => {
-  //     ReactDOM.render(
-  //         <AccountWindow account={data.account} />,
-  //         document.querySelector("#content")
-  //     );
-  // });
-  ReactDOM.render( /*#__PURE__*/React.createElement(AccountWindow, {
-    account: {
-      username: 'testUsername',
-      gamesPlayed: 10,
-      gamesWon: 6,
-      gamesLost: 4
-    }
-  }), document.querySelector("#content"));
+  sendRequest('GET', '/account', null, function (data) {
+    ReactDOM.render( /*#__PURE__*/React.createElement(AccountWindow, {
+      account: data
+    }), document.querySelector("#content"));
+  });
 };
 
 var createGameList = function createGameList() {
-  // sendAjax('GET', '/getRooms', null, (data) => {
-  //     ReactDOM.render(
-  //         <GameList rooms={data.rooms} />,
-  //         document.querySelector("#content")
-  //     );
-  // });
-  ReactDOM.render( /*#__PURE__*/React.createElement(GameList, {
-    rooms: [{
-      _id: '54elkjh3kljh34kj5h',
-      name: 'testName',
-      creatorUsername: 'testUsername',
-      state: 'Waiting',
-      turn: 0
-    }]
-  }), document.querySelector("#content"));
+  sendRequest('GET', '/rooms', null, function (data) {
+    ReactDOM.render( /*#__PURE__*/React.createElement(GameList, {
+      csrf: csrf,
+      rooms: data.rooms
+    }), document.querySelector("#content"));
+  });
 };
 
 var createGame = function createGame() {
@@ -183,12 +254,30 @@ var createGame = function createGame() {
 "use strict";
 
 // Functionalities
-// Function to join a UTTT room/game
-var handleJoin = function handleJoin(e, roomID) {
-  socket.emit('joinRoom', {
-    id: roomID
+var handleCreate = function handleCreate(e) {
+  e.preventDefault();
+  var name = document.querySelector("#roomName").value.trim();
+
+  if (name == '') {
+    handleError('Room name required');
+    return false;
+  }
+
+  var createForm = document.querySelector("#createForm");
+  sendRequest(createForm.method, createForm.action, serialize(createForm), function (data) {
+    handleJoin(e, data.room._id);
   });
-  createGame();
+  return false;
+}; // Function to join a UTTT room/game
+
+
+var handleJoin = function handleJoin(e, roomID) {
+  sendRequest('POST', '/join', "_csrf=".concat(csrf, "&id=").concat(roomID), function (response) {
+    socket.emit('joinRoom', {
+      id: response.data.room.id
+    });
+    createGame();
+  });
 }; // Function to send a message in a UTTT room chat
 
 
@@ -213,9 +302,15 @@ var handleKeypressSend = function handleKeypressSend(e) {
 
 
 var handleTurn = function handleTurn(e, utttCell, tttCell) {
-  socket.emit('turn', {
+  var data = {
+    _csrf: csrf,
     utttCell: utttCell,
     tttCell: tttCell
+  };
+  sendRequest('POST', '/turn', encodeObjectToBody(data), function (response) {
+    socket.emit('turn', {
+      board: response.board
+    });
   });
 }; // Function to flag that player has surrendered
 
@@ -239,6 +334,12 @@ var updateChat = function updateChat(data) {
     message.innerHTML = "<b>".concat(data.username, "</b>: ").concat(data.text);
     chat.appendChild(message);
   }
+};
+
+var updateBoard = function updateBoard(board) {
+  ReactDOM.render( /*#__PURE__*/React.createElement(UTTTGrid, {
+    board: board
+  }), document.querySelector(".board"));
 };
 "use strict";
 
@@ -321,6 +422,20 @@ var serialize = function serialize(form) {
     _iterator.e(err);
   } finally {
     _iterator.f();
+  }
+
+  return data.join('&');
+};
+
+var encodeObjectToBody = function encodeObjectToBody(obj) {
+  var data = [];
+
+  for (var _i2 = 0, _Object$entries = Object.entries(obj); _i2 < _Object$entries.length; _i2++) {
+    var _Object$entries$_i = _slicedToArray(_Object$entries[_i2], 2),
+        key = _Object$entries$_i[0],
+        value = _Object$entries$_i[1];
+
+    data.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
   }
 
   return data.join('&');

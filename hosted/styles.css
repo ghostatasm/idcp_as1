@@ -1,0 +1,25 @@
+@import url('./styles/board.css');
+
+* {
+    /* border: 1px solid black; */
+}
+
+#logo {
+    width: 64px;
+}
+
+#loginButton {
+    
+}
+
+#signupButton {
+
+}
+
+#content {
+
+}
+
+#app {
+    
+}

@@ -27,7 +27,7 @@ const login = (req, res) => {
     }
 
     // Set session account cookie
-    req.session.account = AccountModel.toAPI(account);
+    req.session.account = AccountModel.getSimplified(account);
 
     // Return redirect
     return res.json({ redirect: '/app' });
@@ -63,7 +63,7 @@ const signup = (req, res) => {
         console.log(err);
 
         if (err.code === 11000) {
-          return res.status(400).json({ error: 'Username already in use. ' });
+          return res.status(400).json({ error: 'Username already in use' });
         }
 
         return res.status(400).json({ error: 'An error ocurred creating the account' });
@@ -82,41 +82,36 @@ const resetPassword = (req, res) => {
     return res.status(400).json({ error: 'Passwords do not match' });
   }
 
-  // If there is an account in session
-  if (req.session.account) {
-    return AccountModel.findOneByUsername(req.session.account.username, (findErr, doc) => {
-      if (findErr) {
-        console.log(findErr);
-        return res.status(500).json({ error: 'An error ocurred retrieving your account' });
-      }
+  return AccountModel.findOneByUsername(req.session.account.username, (findErr, doc) => {
+    if (findErr) {
+      console.log(findErr);
+      return res.status(500).json({ error: 'An error ocurred retrieving your account' });
+    }
 
-      if (!doc) {
-        return res.status(400).json({ error: 'No account found with the username specified' });
-      }
+    if (!doc) {
+      return res.status(400).json({ error: 'No account found with the username specified' });
+    }
 
-      return AccountModel.generateHash(req.body.pass, (salt, hash) => {
-        const docEdit = doc;
+    return AccountModel.generateHash(req.body.pass, (salt, hash) => {
+      const docEdits = doc;
 
-        docEdit.salt = salt;
-        docEdit.password = hash;
+      docEdits.salt = salt;
+      docEdits.password = hash;
 
-        doc.save((saveErr) => {
-          if (saveErr) {
-            console.log(saveErr);
+      doc.save((saveErr) => {
+        if (saveErr) {
+          console.log(saveErr);
 
-            return res.status(400).json({ error: 'An error ocurred updating your password' });
-          }
+          return res.status(500).json({ error: 'An error ocurred updating your password' });
+        }
 
-          req.session.destroy();
+        req.session.destroy();
 
-          // Return redirect
-          return res.json({ redirect: '/' });
-        });
+        // Return redirect
+        return res.json({ redirect: '/' });
       });
     });
-  }
-
-  return res.status(400).json({ error: 'No account found in session' });
+  });
 };
 
 const account = (req, res) => {

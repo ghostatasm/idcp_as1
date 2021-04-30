@@ -221,6 +221,20 @@ var serialize = function serialize(form) {
   }
 
   return data.join('&');
+};
+
+var encodeObjectToBody = function encodeObjectToBody(obj) {
+  var data = [];
+
+  for (var _i2 = 0, _Object$entries = Object.entries(obj); _i2 < _Object$entries.length; _i2++) {
+    var _Object$entries$_i = _slicedToArray(_Object$entries[_i2], 2),
+        key = _Object$entries$_i[0],
+        value = _Object$entries$_i[1];
+
+    data.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
+  }
+
+  return data.join('&');
 }; // All pages must implement init() !!!
 
 

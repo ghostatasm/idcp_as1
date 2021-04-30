@@ -1,12 +1,32 @@
 // Functionalities
+const handleCreate = (e) => {
+    e.preventDefault();
+
+    const name = document.querySelector("#roomName").value.trim();
+
+    if (name == '') {
+        handleError('Room name required');
+        return false;
+    }
+
+    const createForm = document.querySelector("#createForm");
+    sendRequest(createForm.method, createForm.action, serialize(createForm), data => {
+        handleJoin(e, data.room._id);
+    });
+
+    return false;
+};
 
 // Function to join a UTTT room/game
 const handleJoin = (e, roomID) => {
-    socket.emit('joinRoom', {
-        id: roomID,
+    sendRequest('POST', '/join', `_csrf=${csrf}&id=${roomID}`, response => {
+        socket.emit('joinRoom', {
+            id: response.data.room.id,
+        });
+    
+        createGame();
     });
-
-    createGame();
+    
 };
 
 // Function to send a message in a UTTT room chat
@@ -31,9 +51,16 @@ const handleKeypressSend = (e) => {
 
 // Function for player to take turn and play in a cell
 const handleTurn = (e, utttCell, tttCell) => {
-    socket.emit('turn', {
+    const data = {
+        _csrf: csrf,
         utttCell,
         tttCell,
+    };
+
+    sendRequest('POST', '/turn', encodeObjectToBody(data), response => {
+        socket.emit('turn', {
+            board: response.board,
+        });
     });
 };
 
@@ -57,3 +84,10 @@ const updateChat = (data) => {
         chat.appendChild(message);
     }
 };
+
+const updateBoard = (board) => {
+    ReactDOM.render(
+        <UTTTGrid board={board} />,
+        document.querySelector(".board")
+    );
+}

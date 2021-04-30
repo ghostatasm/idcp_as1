@@ -51,7 +51,15 @@ const serialize = (form) => {
         data.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
     }
     return data.join('&');
-}
+};
+
+const encodeObjectToBody = (obj) => {
+    const data = [];
+    for (const [key, value] of Object.entries(obj)) {
+        data.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
+    }
+    return data.join('&');
+};
 
 // All pages must implement init() !!!
 document.addEventListener('DOMContentLoaded', e => {

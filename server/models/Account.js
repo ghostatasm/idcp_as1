@@ -39,13 +39,32 @@ const AccountSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  gamesPlayed: {
+    type: Number,
+    default: 0,
+  },
+  gamesWon: {
+    type: Number,
+    default: 0,
+  },
+  gamesTied: {
+    type: Number,
+    default: 0,
+  },
+  gamesLost: {
+    type: Number,
+    default: 0,
+  },
 });
 
 // Returns simplified copy of account document
-AccountSchema.statics.toAPI = (doc) => ({
+AccountSchema.statics.getSimplified = (doc) => ({
   // _id is built into mongo document and is guaranteed to be unique
   username: doc.username,
   _id: doc._id,
+  gamesPlayed: doc.gamesPlayed,
+  gamesWon: doc.gamesWon,
+  gamesLost: doc.gamesLost,
 });
 
 AccountSchema.statics.findOneByUsername = (username, callback) => {
