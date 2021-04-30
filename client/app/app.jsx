@@ -10,7 +10,6 @@ const init = () => {
     });
 
     socket.on('turn', data => {
-        console.log(data);
         updateBoard(data.board);
     });
 

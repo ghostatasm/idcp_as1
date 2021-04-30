@@ -10,7 +10,6 @@ var init = function init() {
     updateChat(data);
   });
   socket.on('turn', function (data) {
-    console.log(data);
     updateBoard(data.board);
   });
   sendRequest('GET', '/account', null, function (account) {
@@ -308,9 +307,11 @@ var handleTurn = function handleTurn(e, utttCell, tttCell) {
     tttCell: tttCell
   };
   sendRequest('POST', '/turn', encodeObjectToBody(data), function (response) {
-    socket.emit('turn', {
-      board: response.board
-    });
+    if (response.data.board) {
+      socket.emit('turn', {
+        board: response.data.board
+      });
+    }
   });
 }; // Function to flag that player has surrendered
 

@@ -234,9 +234,6 @@ const turn = (req, res) => {
           return res.status(500).json({ error: 'An error ocurred trying to save the turn' });
         }
 
-        // Clear session room cookie
-        req.session.room = null;
-
         // Return server response
         return res.json(new Response('TURN_TAKEN', 'Turn taken successfully',
           {

@@ -117,7 +117,7 @@ const GameRoomSchema = new mongoose.Schema({
   localWins: {
     // Array with winner of each local TTT game
     type: Array,
-    default: new Array(0).fill(' '),
+    default: new Array(9).fill(' '),
   },
   spectators: {
     // Hashmap of spectators
@@ -164,9 +164,11 @@ GameRoomSchema.statics.join = async (id, username, callbacks) => {
     if (!doc.players[0]) {
       // Join as player 1
       doc.players[0] = username;
+      doc.markModified('players');
     } else if (!doc.players[1]) {
       // Join as player 2
       doc.players[1] = username;
+      doc.markModified('players');
       // Start the game
       doc.state = GAMEROOM_STATE.PLAYING;
     }
@@ -210,6 +212,7 @@ GameRoomSchema.statics.leave = async (id, username, callbacks) => {
 
     // Leave
     doc.players[0] = null;
+    doc.markModified('players');
   } else if (username === doc.players[1]) {
     // If this is player 2
 
@@ -254,13 +257,15 @@ GameRoomSchema.statics.turn = async (id, username, turn, callbacks) => {
       if (utttCell >= 0 && utttCell <= 8 && tttCell >= 0 && tttCell <= 8) {
         // If this is the first move do it,
         // If not, check that it was played in the right UTTT cell
-        if (!doc.lastTurn[0] || doc.lastTurn[0] === utttCell) {
+        if (!doc.lastTurn[0] || doc.lastTurn[1] === utttCell) {
           doc.turn++; // Increase turn counter
 
           // Update board
           doc.board[utttCell][tttCell] = doc.turn % 2 === 0 ? 'O' : 'X';
+          doc.markModified('board');
           // Update local wins at UTTT cell played
           doc.localWins[utttCell] = getTTTWinner(doc.board[utttCell]);
+          doc.markModified('localWins');
 
           // Check global win of UTTT board
           const winner = getTTTWinner(doc.localWins);
@@ -268,12 +273,16 @@ GameRoomSchema.statics.turn = async (id, username, turn, callbacks) => {
             // Game isn't over yet
             doc.nextPlayer = !doc.nextPlayer; // Toggle next player
             doc.lastTurn = [utttCell, tttCell]; // Save move as the last one
+            doc.markModified('lastTurn');
 
             // Save changes
             return doc.save(callbacks.save);
           }
           // There was a winner/tie
           return gameOver(doc, winner, callbacks.delete);
+        }
+        else {
+          return callbacks.turn('Must play in the correct cell');
         }
       } else {
         return callbacks.turn('Cell index out of range');

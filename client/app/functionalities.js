@@ -58,9 +58,11 @@ const handleTurn = (e, utttCell, tttCell) => {
     };
 
     sendRequest('POST', '/turn', encodeObjectToBody(data), response => {
-        socket.emit('turn', {
-            board: response.board,
-        });
+        if (response.data.board) {
+            socket.emit('turn', {
+                board: response.data.board,
+            });
+        }
     });
 };
 
