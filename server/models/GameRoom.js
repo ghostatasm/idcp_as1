@@ -281,20 +281,13 @@ GameRoomSchema.statics.turn = async (id, username, turn, callbacks) => {
           // There was a winner/tie
           return gameOver(doc, winner, callbacks.delete);
         }
-        else {
-          return callbacks.turn('Must play in the correct cell');
-        }
-      } else {
-        return callbacks.turn('Cell index out of range');
+        return callbacks.turn('Must play in the correct cell');
       }
-    } else {
-      return callbacks.turn('It is not your turn');
+      return callbacks.turn('Cell index out of range');
     }
-  } else {
-    return callbacks.turn('The game has not started');
+    return callbacks.turn('It is not your turn');
   }
-
-  return callbacks.turn('Bad turn request');
+  return callbacks.turn('The game has not started');
 };
 
 GameRoomModel = mongoose.model('GameRoom', GameRoomSchema);
