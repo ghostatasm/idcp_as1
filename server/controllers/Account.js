@@ -4,7 +4,7 @@ const { AccountModel } = models.Account;
 
 const logout = (req, res) => {
   req.session.destroy();
-  res.redirect('/');
+  return res.redirect('/');
 };
 
 const login = (req, res) => {
@@ -58,7 +58,7 @@ const signup = (req, res) => {
 
     const newAccount = new AccountModel(accountData);
 
-    newAccount.save((err) => {
+    newAccount.save((err, doc) => {
       if (err) {
         console.log(err);
 
@@ -69,7 +69,8 @@ const signup = (req, res) => {
         return res.status(400).json({ error: 'An error ocurred creating the account' });
       }
 
-      return logout(req, res);
+      req.session.account = AccountModel.getSimplified(doc);
+      return res.json({ redirect: '/app' });
     });
   });
 };

@@ -1,6 +1,7 @@
 .utttGrid {
     display: block;
     aspect-ratio: 1 / 1;
+    max-width: 512px;
 }
 
 .utttGrid tbody {

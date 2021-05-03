@@ -186,7 +186,6 @@ var sendRequest = function sendRequest(method, url, body, success) {
   };
 
   xhr.onerror = function (err) {
-    console.log(err);
     handleError(err);
   };
 

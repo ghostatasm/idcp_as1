@@ -22,7 +22,7 @@ const sendRequest = (method, url, body, success) => {
     xhr.open(method, url);
     xhr.setRequestHeader('Accept', 'application/json');
     xhr.onload = e => {
-        const response = JSON.parse(xhr.response)
+        const response = JSON.parse(xhr.response);
         if (response.error) {
             handleError(response.error);
         }
@@ -31,7 +31,6 @@ const sendRequest = (method, url, body, success) => {
         }
     };
     xhr.onerror = (err) => {
-        console.log(err);
         handleError(err)
     };
     if (body) {
