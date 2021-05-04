@@ -1,0 +1,6 @@
+{
+    "static": {
+        "path": "./hosted/",
+        "url": "/assets"
+    }
+}

@@ -1,28 +1,28 @@
 // React component factories
 const createAccountWindow = () => {
-    sendRequest('GET', '/account', null, (data) => {
+    sendRequest('GET', '/account', null, (response) => {
         ReactDOM.render(
-            <AccountWindow account={data} />,
+            <AccountWindow account={response} />,
             document.querySelector("#content")
         );
     });
 };
 
 const createGameList = () => {
-    sendRequest('GET', '/rooms', null, data => {
+    sendRequest('GET', '/rooms', null, response => {
         ReactDOM.render(
             <GameList
                 csrf={csrf}
-                rooms={data.rooms} />,
+                rooms={response} />,
             document.querySelector("#content")
         );
     });
 
 };
 
-const createGame = () => {
+const createGame = (board) => {
     ReactDOM.render(
-        <Game />,
+        <Game board={board}/>,
         document.querySelector("#content")
     );
 };

@@ -9,7 +9,7 @@ const getToken = (callback) => {
 
 const handleError = (message) => {
     console.log(message);
-    
+
     // TODO
 };
 
@@ -46,17 +46,23 @@ const sendRequest = (method, url, body, success) => {
 // https://stackoverflow.com/questions/39786337/how-to-convert-js-object-data-to-x-www-form-urlencoded
 const serialize = (form) => {
     const data = [];
-    for (const [key, value] of new FormData(form)) {
+    const formData = new FormData(form);
+
+    formData.forEach((value, key) => {
         data.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
-    }
+    });
+
     return data.join('&');
 };
 
 const encodeObjectToBody = (obj) => {
     const data = [];
-    for (const [key, value] of Object.entries(obj)) {
-        data.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
+    const keys = Object.keys(obj);
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        data.push(encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]));
     }
+
     return data.join('&');
 };
 

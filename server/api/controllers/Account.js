@@ -1,6 +1,4 @@
-const models = require('../models');
-
-const { AccountModel } = models.Account;
+const { AccountModel } = require('../models/Account.js');
 
 const logout = (req, res) => {
   req.session.destroy();

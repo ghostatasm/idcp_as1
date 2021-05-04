@@ -5,12 +5,8 @@ const init = () => {
     // Connect to the base URL
     socket = io(window.location.origin);
 
-    socket.on('message', data => {
-        updateChat(data);
-    });
-
-    socket.on('turn', data => {
-        updateBoard(data.board);
+    socket.on('message', response => {
+        updateChat(response);
     });
 
     sendRequest('GET', '/account', null, account => {

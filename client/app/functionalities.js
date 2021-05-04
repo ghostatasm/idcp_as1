@@ -10,8 +10,9 @@ const handleCreate = (e) => {
     }
 
     const createForm = document.querySelector("#createForm");
-    sendRequest(createForm.method, createForm.action, serialize(createForm), data => {
-        handleJoin(e, data.room._id);
+    sendRequest(createForm.method, createForm.action, serialize(createForm), response => {
+        socket.emit('joinRoom', response);
+        createGame(response.board);
     });
 
     return false;
@@ -20,13 +21,10 @@ const handleCreate = (e) => {
 // Function to join a UTTT room/game
 const handleJoin = (e, roomID) => {
     sendRequest('POST', '/join', `_csrf=${csrf}&id=${roomID}`, response => {
-        socket.emit('joinRoom', {
-            id: response.data.room.id,
-        });
-    
-        createGame();
+        socket.emit('joinRoom', response);
+        createGame(response.board);
     });
-    
+
 };
 
 // Function to send a message in a UTTT room chat
@@ -58,11 +56,7 @@ const handleTurn = (e, utttCell, tttCell) => {
     };
 
     sendRequest('POST', '/turn', encodeObjectToBody(data), response => {
-        if (response.data.board) {
-            socket.emit('turn', {
-                board: response.data.board,
-            });
-        }
+        socket.emit('turn', response);
     });
 };
 
@@ -86,10 +80,3 @@ const updateChat = (data) => {
         chat.appendChild(message);
     }
 };
-
-const updateBoard = (board) => {
-    ReactDOM.render(
-        <UTTTGrid board={board} />,
-        document.querySelector(".board")
-    );
-}

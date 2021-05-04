@@ -5,7 +5,7 @@ const { Message } = require('./classes');
 /**
  * Starts socket.io WebSockets and returns the socket
  * @param {Object} server - Your Express server (returned from .listen
- * @returns The socket object
+ * @returns The socket io object
  */
 const start = (server) => {
   const io = socketIO(server);
@@ -29,6 +29,7 @@ const start = (server) => {
         const room = sockets.to(roomSocketName); // Room Emitter
 
         socket.join(roomSocketName);
+        socket.emit('joinRoom', roomData);
 
         room.emit('message', new Message(
           'server',
