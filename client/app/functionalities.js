@@ -1,4 +1,26 @@
 // Functionalities
+const handleResetPassword = (e) => {
+    e.preventDefault();
+
+    const pass = document.querySelector("#pass");
+    const pass2 = document.querySelector("#pass2");
+
+    if (pass.value == '' || pass2.value == '') {
+        handleError('All fields are required');
+        return false;
+    }
+
+    if (pass.value !== pass2.value) {
+        handleError('Passwords do not match');
+        return false;
+    }
+
+    const resetPassForm = document.querySelector("#resetPasswordForm");
+    sendRequest(resetPassForm.method, resetPassForm.action, serialize(resetPassForm), handleRedirect);
+
+    return false;
+}
+
 const handleCreate = (e) => {
     e.preventDefault();
 
@@ -24,7 +46,6 @@ const handleJoin = (e, roomID) => {
         socket.emit('joinRoom', response);
         createGame(response.board);
     });
-
 };
 
 // Function to send a message in a UTTT room chat
@@ -57,6 +78,9 @@ const handleTurn = (e, utttCell, tttCell) => {
 
     sendRequest('POST', '/turn', encodeObjectToBody(data), response => {
         socket.emit('turn', response);
+        if (response.winner !== '') {
+            socket.emit('winner', { winner: response.winner });
+        }
     });
 };
 
@@ -70,8 +94,7 @@ const handleSurrender = (e) => {
 // Function to leave a room
 const handleLeave = (e) => {
     sendRequest('POST', '/leave', `_csrf=${csrf}`, response => {
-        console.log(response);
-        socket.emit('leaveRoom');
+        socket.emit('leaveRoom', response);
         createGameList();
     });
 };

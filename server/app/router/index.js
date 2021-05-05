@@ -13,7 +13,7 @@ const router = (app) => {
   app.post('/login', mid.requiresSecure, mid.requiresLogout, controllers.Account.login);
   app.post('/signup', mid.requiresSecure, mid.requiresLogout, controllers.Account.signup);
   app.get('/logout', mid.requiresLogin, controllers.Account.logout);
-  app.put('/resetPassword', mid.requiresSecure, mid.requiresLogin, controllers.Account.resetPassword);
+  app.post('/resetPassword', mid.requiresSecure, mid.requiresLogin, controllers.Account.resetPassword);
   app.get('/account', mid.requiresSecure, mid.requiresLogin, controllers.Account.account);
   // GameRoom
   app.get('/rooms', mid.requiresLogin, controllers.GameRoom.rooms);
@@ -21,6 +21,7 @@ const router = (app) => {
   app.get('/board', mid.requiresSecure, mid.requiresLogin, controllers.GameRoom.board);
   app.post('/create', mid.requiresSecure, mid.requiresLogin, controllers.GameRoom.create);
   app.post('/join', mid.requiresSecure, mid.requiresLogin, controllers.GameRoom.join);
+  app.post('/rejoin', mid.requiresSecure, mid.requiresLogin, controllers.GameRoom.rejoin);
   app.post('/leave', mid.requiresLogin, controllers.GameRoom.leave);
   app.post('/turn', mid.requiresSecure, mid.requiresLogin, controllers.GameRoom.turn);
 

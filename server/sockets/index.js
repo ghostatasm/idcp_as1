@@ -29,7 +29,17 @@ const start = (server) => {
         const room = sockets.to(roomSocketName); // Room Emitter
 
         socket.join(roomSocketName);
-        socket.emit('joinRoom', roomData);
+
+        socket.emit('joinRoom',
+          {
+            account,
+            room: roomData,
+          });
+
+        room.emit('playerJoined', {
+          player: account,
+          room: roomData,
+        });
 
         room.emit('message', new Message(
           'server',
@@ -42,12 +52,17 @@ const start = (server) => {
 
           room.emit('message', new Message(
             'server',
-            `${account.username} has left the room`,
+            `${account.username} has disconnected from the room`,
           ));
         });
 
-        socket.on('leaveRoom', () => {
+        socket.on('leaveRoom', (leaveRoomData) => {
           socket.leave(roomSocketName);
+
+          room.emit('playerLeft', {
+            player: account,
+            room: leaveRoomData,
+          });
 
           room.emit('message', new Message(
             'server',
@@ -57,11 +72,19 @@ const start = (server) => {
 
         // Game Events
         socket.on('turn', (turnData) => {
-          room.emit('turn', turnData);
+          room.emit('turn', {
+            account,
+            room: turnData,
+          });
         });
 
         socket.on('winner', (winnerData) => {
           room.emit('gameover', winnerData);
+
+          room.emit('message', new Message(
+            'server',
+            `${winnerData.winner} wins the game!`,
+          ));
         });
 
         // Chat Events

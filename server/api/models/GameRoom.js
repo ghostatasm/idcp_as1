@@ -24,7 +24,7 @@ const gameOver = (room, winner) => {
   const roomEdits = room;
 
   // Edit room
-  roomEdits.state = GAMEROOM_STATE.FINISHED;
+  roomEdits.state = GAMEROOM_STATE.WAITING;
   roomEdits.winner = winner;
 
   // Update Account stats
@@ -259,30 +259,29 @@ GameRoomSchema.statics.leave = async (id, username) => {
   } else {
     // Player 1 and 2 are different
 
+    // If this is player 1
     if (username === doc.players[0]) {
-      // If this is player 1
-      // Leave player 1
-      doc.players[0] = null;
-      doc.markModified('players');
-
       // If player 1 left while the game is ongoing
       if (doc.state === GAMEROOM_STATE.PLAYING) {
         // Declare player 2 the winner
         gameOver(doc, doc.players[1]);
       }
-    }
 
-    if (username === doc.players[1]) {
-      // If this is player 2
-      // Leave player 2
-      doc.players[1] = null;
+      // Leave player 1
+      doc.players[0] = null;
       doc.markModified('players');
-
+    }
+    // If this is player 2
+    if (username === doc.players[1]) {
       // If player 2 left while the game is ongoing
       if (doc.state === GAMEROOM_STATE.PLAYING) {
         // Declare player 1 the winner
-        gameOver(doc, doc.players[1]);
+        gameOver(doc, doc.players[0]);
       }
+
+      // Leave player 2
+      doc.players[1] = null;
+      doc.markModified('players');
     }
   }
 

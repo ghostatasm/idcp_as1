@@ -25,6 +25,14 @@ const AccountWindow = (props) => {
                 <label htmlFor="gamesPlayed">Games Played:</label><p className="gamesPlayed">{props.account.gamesPlayed}</p>
                 <label htmlFor="wonLost">Won/Tied/Lost:</label><p className="wonLost">{props.account.gamesWon}/{props.account.gamesTied}/{props.account.gamesLost}</p>
             </div>
+            <form action="/resetPassword" method="post" onSubmit={handleResetPassword} id="resetPasswordForm">
+                <label htmlFor="pass">Password: </label>
+                <input id="pass" type="password" name="pass" placeholder="password" />
+                <label htmlFor="pass2">Password: </label>
+                <input id="pass2" type="password" name="pass2" placeholder="retype password" />
+                <input type="hidden" name="_csrf" value={csrf} />
+                <input type="submit" value="Reset Password" />
+            </form>
         </div>
     );
 };
@@ -70,8 +78,8 @@ const GameList = (props) => {
 const TTTGrid = (props) => {
     const [classes, setClasses] = React.useState('tttGrid');
 
-    socket.on('joinRoom', room => {
-        const index = +getCellToHighlight(room);
+    socket.on('joinRoom', response => {
+        const index = +getCellToHighlight(response.room);
         if (index === -1 || index === props.utttcell) {
             setClasses('tttGrid highlight');
         }
@@ -81,7 +89,7 @@ const TTTGrid = (props) => {
     });
 
     socket.on('turn', response => {
-        const index = +getCellToHighlight(response);
+        const index = +getCellToHighlight(response.room);
         if (index === -1 || index === props.utttcell) {
             setClasses(classes + ' highlight');
         }
@@ -119,7 +127,7 @@ const UTTTGrid = (props) => {
     // Listen for board updates
     socket.on('turn', response => {
         // Update board
-        setBoard(response.board);
+        setBoard(response.room.board);
     });
 
     return (
@@ -182,27 +190,41 @@ const Chat = (props) => {
 const TurnLabel = (props) => {
     const [turnText, setTurnText] = React.useState('');
 
-    // Init visibility
-    socket.on('joinRoom', room => {
-        sendRequest('GET', '/account', null, account => {
-            if (isPlayersTurn(account, room)) {
+    const updateLabel = (response) => {
+        if (response.room.state === 'Playing') {
+            if (isPlayersTurn(response.account, response.room)) {
                 setTurnText('It is your turn!')
             }
             else {
                 setTurnText('Wait for your opponent to play');
             }
-        });
+        }
+        else {
+            setTurnText('The game has not yet started');
+        }
+    }
+
+    // Init visibility
+    socket.on('joinRoom', response => {
+        updateLabel(response);
     });
 
     // Every turn, check if it is the player's turn and update text
-    socket.on('turn', room => {
-        sendRequest('GET', '/account', null, account => {
-            if (isPlayersTurn(account, room)) {
-                setTurnText('It is your turn!')
-            }
-            else {
-                setTurnText('Wait for your opponent to play');
-            }
+    socket.on('turn', response => {
+        updateLabel(response);
+    });
+
+    socket.on('playerJoined', response => {
+        sendRequest('GET', '/account', `_csrf=${csrf}`, account => {
+            response.account = account;
+            updateLabel(response);
+        });
+    });
+
+    socket.on('playerLeft', response => {
+        sendRequest('GET', '/account', `_csrf=${csrf}`, account => {
+            response.account = account;
+            updateLabel(response);
         });
     });
 

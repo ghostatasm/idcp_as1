@@ -170,8 +170,7 @@ var sendRequest = function sendRequest(method, url, body, callback) {
       } else {
         callback(response);
       }
-    } catch (err) {
-      console.log(err);
+    } catch (err) {// JSON Parsing Error
     }
   };
 

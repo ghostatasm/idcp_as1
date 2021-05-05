@@ -33,7 +33,7 @@ const sendRequest = (method, url, body, callback) => {
             }
         }
         catch (err) {
-            console.log(err);
+            // JSON Parsing Error
         }
     };
     xhr.onerror = (err) => {

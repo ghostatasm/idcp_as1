@@ -5,7 +5,15 @@ var socket; // Client connection socket
 
 var init = function init() {
   // Connect to the base URL
-  socket = io(window.location.origin); // DOM Events
+  socket = io(window.location.origin); // Socket listeners
+
+  socket.on('playerLeft', function (response) {
+    if (response.room.winner !== '') {
+      socket.emit('winner', {
+        winner: response.room.winner
+      });
+    }
+  }); // DOM Events
 
   var accountButton = document.querySelector("#accountButton");
   accountButton.addEventListener('click', function (e) {
@@ -18,10 +26,12 @@ var init = function init() {
     createGameList(); // Check if the player is in a game
 
     sendRequest('GET', 'room', null, function (response) {
-      // If there is a game in session show it
-      if (response && response.board) {
-        socket.emit('joinRoom', response);
-        createGame(response.board);
+      // If there is a game in session join it
+      if (response) {
+        sendRequest('POST', '/rejoin', "_csrf=".concat(csrf, "&id=").concat(response._id), function (joinResponse) {
+          socket.emit('joinRoom', joinResponse);
+          createGame(joinResponse.board);
+        });
       }
     });
   }); // Default View
@@ -34,10 +44,12 @@ var init = function init() {
     }); // Check if the player is in a game
 
     sendRequest('GET', '/room', null, function (response) {
-      // If there is a game in session show it
-      if (response && response.board) {
-        socket.emit('joinRoom', response);
-        createGame(response.board);
+      // If there is a game in session join it
+      if (response) {
+        sendRequest('POST', '/rejoin', "_csrf=".concat(csrf, "&id=").concat(response._id), function (joinResponse) {
+          socket.emit('joinRoom', joinResponse);
+          createGame(joinResponse.board);
+        });
       }
     });
   });
@@ -98,7 +110,33 @@ var AccountWindow = function AccountWindow(props) {
     htmlFor: "wonLost"
   }, "Won/Tied/Lost:"), /*#__PURE__*/React.createElement("p", {
     className: "wonLost"
-  }, props.account.gamesWon, "/", props.account.gamesTied, "/", props.account.gamesLost)));
+  }, props.account.gamesWon, "/", props.account.gamesTied, "/", props.account.gamesLost)), /*#__PURE__*/React.createElement("form", {
+    action: "/resetPassword",
+    method: "post",
+    onSubmit: handleResetPassword,
+    id: "resetPasswordForm"
+  }, /*#__PURE__*/React.createElement("label", {
+    htmlFor: "pass"
+  }, "Password: "), /*#__PURE__*/React.createElement("input", {
+    id: "pass",
+    type: "password",
+    name: "pass",
+    placeholder: "password"
+  }), /*#__PURE__*/React.createElement("label", {
+    htmlFor: "pass2"
+  }, "Password: "), /*#__PURE__*/React.createElement("input", {
+    id: "pass2",
+    type: "password",
+    name: "pass2",
+    placeholder: "retype password"
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "hidden",
+    name: "_csrf",
+    value: csrf
+  }), /*#__PURE__*/React.createElement("input", {
+    type: "submit",
+    value: "Reset Password"
+  })));
 };
 
 var GameList = function GameList(props) {
@@ -140,8 +178,8 @@ var TTTGrid = function TTTGrid(props) {
       classes = _React$useState2[0],
       setClasses = _React$useState2[1];
 
-  socket.on('joinRoom', function (room) {
-    var index = +getCellToHighlight(room);
+  socket.on('joinRoom', function (response) {
+    var index = +getCellToHighlight(response.room);
 
     if (index === -1 || index === props.utttcell) {
       setClasses('tttGrid highlight');
@@ -150,7 +188,7 @@ var TTTGrid = function TTTGrid(props) {
     }
   });
   socket.on('turn', function (response) {
-    var index = +getCellToHighlight(response);
+    var index = +getCellToHighlight(response.room);
 
     if (index === -1 || index === props.utttcell) {
       setClasses(classes + ' highlight');
@@ -226,7 +264,7 @@ var UTTTGrid = function UTTTGrid(props) {
 
   socket.on('turn', function (response) {
     // Update board
-    setBoard(response.board);
+    setBoard(response.room.board);
   });
   return /*#__PURE__*/React.createElement("table", {
     className: "utttGrid"
@@ -308,26 +346,38 @@ var TurnLabel = function TurnLabel(props) {
   var _React$useState7 = React.useState(''),
       _React$useState8 = _slicedToArray(_React$useState7, 2),
       turnText = _React$useState8[0],
-      setTurnText = _React$useState8[1]; // Init visibility
+      setTurnText = _React$useState8[1];
 
-
-  socket.on('joinRoom', function (room) {
-    sendRequest('GET', '/account', null, function (account) {
-      if (isPlayersTurn(account, room)) {
+  var updateLabel = function updateLabel(response) {
+    if (response.room.state === 'Playing') {
+      if (isPlayersTurn(response.account, response.room)) {
         setTurnText('It is your turn!');
       } else {
         setTurnText('Wait for your opponent to play');
       }
-    });
+    } else {
+      setTurnText('The game has not yet started');
+    }
+  }; // Init visibility
+
+
+  socket.on('joinRoom', function (response) {
+    updateLabel(response);
   }); // Every turn, check if it is the player's turn and update text
 
-  socket.on('turn', function (room) {
-    sendRequest('GET', '/account', null, function (account) {
-      if (isPlayersTurn(account, room)) {
-        setTurnText('It is your turn!');
-      } else {
-        setTurnText('Wait for your opponent to play');
-      }
+  socket.on('turn', function (response) {
+    updateLabel(response);
+  });
+  socket.on('playerJoined', function (response) {
+    sendRequest('GET', '/account', "_csrf=".concat(csrf), function (account) {
+      response.account = account;
+      updateLabel(response);
+    });
+  });
+  socket.on('playerLeft', function (response) {
+    sendRequest('GET', '/account', "_csrf=".concat(csrf), function (account) {
+      response.account = account;
+      updateLabel(response);
     });
   });
   return /*#__PURE__*/React.createElement("div", {
@@ -378,6 +428,26 @@ var createGame = function createGame(board) {
 "use strict";
 
 // Functionalities
+var handleResetPassword = function handleResetPassword(e) {
+  e.preventDefault();
+  var pass = document.querySelector("#pass");
+  var pass2 = document.querySelector("#pass2");
+
+  if (pass.value == '' || pass2.value == '') {
+    handleError('All fields are required');
+    return false;
+  }
+
+  if (pass.value !== pass2.value) {
+    handleError('Passwords do not match');
+    return false;
+  }
+
+  var resetPassForm = document.querySelector("#resetPasswordForm");
+  sendRequest(resetPassForm.method, resetPassForm.action, serialize(resetPassForm), handleRedirect);
+  return false;
+};
+
 var handleCreate = function handleCreate(e) {
   e.preventDefault();
   var name = document.querySelector("#roomName").value.trim();
@@ -432,6 +502,12 @@ var handleTurn = function handleTurn(e, utttCell, tttCell) {
   };
   sendRequest('POST', '/turn', encodeObjectToBody(data), function (response) {
     socket.emit('turn', response);
+
+    if (response.winner !== '') {
+      socket.emit('winner', {
+        winner: response.winner
+      });
+    }
   });
 }; // Function to flag that player has surrendered
 
@@ -444,8 +520,7 @@ var handleSurrender = function handleSurrender(e) {
 
 var handleLeave = function handleLeave(e) {
   sendRequest('POST', '/leave', "_csrf=".concat(csrf), function (response) {
-    console.log(response);
-    socket.emit('leaveRoom');
+    socket.emit('leaveRoom', response);
     createGameList();
   });
 };
@@ -524,8 +599,7 @@ var sendRequest = function sendRequest(method, url, body, callback) {
       } else {
         callback(response);
       }
-    } catch (err) {
-      console.log(err);
+    } catch (err) {// JSON Parsing Error
     }
   };
 

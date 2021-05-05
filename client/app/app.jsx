@@ -5,6 +5,13 @@ const init = () => {
     // Connect to the base URL
     socket = io(window.location.origin);
 
+    // Socket listeners
+    socket.on('playerLeft', response => {
+        if (response.room.winner !== '') {
+            socket.emit('winner', { winner: response.room.winner });
+        }
+    });
+
     // DOM Events
     const accountButton = document.querySelector("#accountButton");
     accountButton.addEventListener('click', e => {
@@ -21,10 +28,12 @@ const init = () => {
 
         // Check if the player is in a game
         sendRequest('GET', 'room', null, response => {
-            // If there is a game in session show it
-            if (response && response.board) {
-                socket.emit('joinRoom', response);
-                createGame(response.board);
+            // If there is a game in session join it
+            if (response) {
+                sendRequest('POST', '/rejoin', `_csrf=${csrf}&id=${response._id}`, joinResponse => {
+                    socket.emit('joinRoom', joinResponse);
+                    createGame(joinResponse.board);
+                });
             }
         });
     });
@@ -40,10 +49,12 @@ const init = () => {
 
         // Check if the player is in a game
         sendRequest('GET', '/room', null, response => {
-            // If there is a game in session show it
-            if (response && response.board) {
-                socket.emit('joinRoom', response);
-                createGame(response.board);
+            // If there is a game in session join it
+            if (response) {
+                sendRequest('POST', '/rejoin', `_csrf=${csrf}&id=${response._id}`, joinResponse => {
+                    socket.emit('joinRoom', joinResponse);
+                    createGame(joinResponse.board);
+                });
             }
         });
     });

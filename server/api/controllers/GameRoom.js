@@ -44,6 +44,25 @@ const join = (req, res) => {
     .catch((err) => res.status(err.statusCode).json({ error: err.message }));
 };
 
+const rejoin = (req, res) => {
+  // Check that all parameters are sent in request
+  if (!req.body.id) {
+    return res.status(400).json({ error: 'Room ID is undefined in request body' });
+  }
+
+  // Rejoin room
+  return GameRoomModel.findOneByID(req.body.id)
+    .then((doc) => {
+      if (!doc) {
+        return res.status(404).json({ error: 'No room found with the ID specified' });
+      }
+
+      req.session.room = doc;
+      return res.json(doc);
+    })
+    .catch((err) => res.status(err.statusCode).json({ error: err.message }));
+};
+
 const create = (req, res) => {
   if (!req.body.name) {
     return res.status(400).json({ error: 'Room name is undefined in request body' });
@@ -69,9 +88,9 @@ const leave = (req, res) => {
   const username = req.session.account.username;
 
   return GameRoomModel.leave(id, username)
-    .then(() => {
+    .then((doc) => {
       req.session.room = null;
-      return res.json({});
+      return res.json(doc);
     })
     .catch((err) => res.status(err.statusCode).json({ error: err.message }));
 };
@@ -115,6 +134,7 @@ module.exports = {
   room,
   board,
   join,
+  rejoin,
   create,
   leave,
   turn,
