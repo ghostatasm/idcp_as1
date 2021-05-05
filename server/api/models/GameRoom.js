@@ -250,39 +250,48 @@ GameRoomSchema.statics.leave = async (id, username) => {
   }
 
   if (username === doc.players[0] && username === doc.players[1]) {
+    doc.players[0] = null;
+    doc.players[1] = null;
+    doc.markModified('players');
+
     // If the player is playing against itself, finish game with no winner
     doc.state = GAMEROOM_STATE.FINISHED;
   } else {
     // Player 1 and 2 are different
 
-    // If this is player 1
     if (username === doc.players[0]) {
+      // If this is player 1
       // Leave player 1
       doc.players[0] = null;
       doc.markModified('players');
-    } else if (username === doc.players[1]) {
-      // Leave player 2
-      doc.players[1] = null;
-      doc.markModified('players');
-    }
 
-    // If the player left while the game is ongoing
-    if (doc.state === GAMEROOM_STATE.PLAYING) {
-      // Declare the other player the winner
-      if (username === doc.players[0]) {
+      // If player 1 left while the game is ongoing
+      if (doc.state === GAMEROOM_STATE.PLAYING) {
+        // Declare player 2 the winner
         gameOver(doc, doc.players[1]);
-      } else if (username === doc.players[1]) {
-        gameOver(doc, doc.players[0]);
       }
     }
 
-    // If there are no players left in the room
-    if (!doc.players[0] && doc.players[1]) {
-      // Delete room from database
-      GameRoomModel.deleteOneByID(doc._id).catch((err) => {
-        console.log(err);
-      });
+    if (username === doc.players[1]) {
+      // If this is player 2
+      // Leave player 2
+      doc.players[1] = null;
+      doc.markModified('players');
+
+      // If player 2 left while the game is ongoing
+      if (doc.state === GAMEROOM_STATE.PLAYING) {
+        // Declare player 1 the winner
+        gameOver(doc, doc.players[1]);
+      }
     }
+  }
+
+  // If there are no players left in the room
+  if (!doc.players[0] && !doc.players[1]) {
+    // Delete room from database
+    return GameRoomModel.deleteOneByID(doc._id).catch((err) => {
+      console.log(err);
+    });
   }
 
   // Save changes to room in database

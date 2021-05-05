@@ -156,23 +156,27 @@ var handleRedirect = function handleRedirect(response) {
   window.location = response.redirect;
 };
 
-var sendRequest = function sendRequest(method, url, body, success) {
+var sendRequest = function sendRequest(method, url, body, callback) {
   var xhr = new XMLHttpRequest();
   xhr.open(method, url);
   xhr.setRequestHeader('Accept', 'application/json');
 
   xhr.onload = function (e) {
-    var response = JSON.parse(xhr.response);
+    try {
+      var response = JSON.parse(xhr.response);
 
-    if (response.error) {
-      handleError(response.error);
-    } else {
-      success(response);
+      if (response && response.error) {
+        handleError(response.error);
+      } else {
+        callback(response);
+      }
+    } catch (err) {
+      console.log(err);
     }
   };
 
   xhr.onerror = function (err) {
-    handleError(err);
+    console.log("An error ocurred trying to send your request to ".concat(url));
   };
 
   if (body) {

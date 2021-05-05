@@ -4,8 +4,8 @@ const isPlayersTurn = (account, room) => {
 };
 
 // Returns index of cell to highlight
-// -1 If all should be highlighted
-// -2 None should be highlighted
+// -1 means all should be highlighted
+// Anything except 0-8 means none highlighted
 const getCellToHighlight = (room) => {
     if (room.turn <= 0 || getTTTWinner(room.board[room.lastTurn[1]]) !== ' ') {
         return -1
@@ -23,7 +23,7 @@ const AccountWindow = (props) => {
             <div className="info">
                 <label htmlFor="username">Username:</label><p className="username">{props.account.username}</p>
                 <label htmlFor="gamesPlayed">Games Played:</label><p className="gamesPlayed">{props.account.gamesPlayed}</p>
-                <label htmlFor="wonLost">Won/Lost:</label><p className="wonLost">{props.account.gamesWon}/{props.account.gamesLost}</p>
+                <label htmlFor="wonLost">Won/Tied/Lost:</label><p className="wonLost">{props.account.gamesWon}/{props.account.gamesTied}/{props.account.gamesLost}</p>
             </div>
         </div>
     );
@@ -55,7 +55,7 @@ const GameList = (props) => {
                             <tr key={room._id}>
                                 <th>{room.name}</th>
                                 <th>{room.creator}</th>
-                                <th>{room.opponent ? 'Playing' : 'Waiting'}</th>
+                                <th>{room.state}</th>
                                 <th>{room.turn}</th>
                                 <th><button className="btnJoin" onClick={(e) => handleJoin(e, room._id)}>Join</button></th>
                             </tr>
@@ -164,9 +164,15 @@ const UTTTGrid = (props) => {
 };
 
 const Chat = (props) => {
+    const [messages, setMessages] = React.useState(props.messages ? props.messages : []);
+
+    socket.on('message', response => {
+        setMessages([...messages, response]);
+    });
+
     return (
         <div className="chat">
-            <ul></ul>
+            <ul>{messages.map(msg => <li key={msg.id}><b>{msg.username}</b>: {msg.text}</li>)}</ul>
             <input type="text" name="message" id="textMessage" onKeyPress={handleKeypressSend} />
             <button id="btnSendMessage" onClick={handleSend}>Send</button>
         </div>

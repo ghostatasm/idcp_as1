@@ -62,21 +62,16 @@ const handleTurn = (e, utttCell, tttCell) => {
 
 // Function to flag that player has surrendered
 const handleSurrender = (e) => {
-    socket.emit('surrender');
+    sendRequest('POST', '/surrender', `_csrf=${csrf}`, response => {
+        // TODO
+    });
 };
 
 // Function to leave a room
 const handleLeave = (e) => {
-    socket.emit('leaveRoom');
-    createGameList();
-};
-
-// Function to add new message to chat
-const updateChat = (data) => {
-    const chat = document.querySelector(".chat ul");
-    if (chat) {
-        const message = document.createElement("li");
-        message.innerHTML = `<b>${data.username}</b>: ${data.text}`;
-        chat.appendChild(message);
-    }
+    sendRequest('POST', '/leave', `_csrf=${csrf}`, response => {
+        console.log(response);
+        socket.emit('leaveRoom');
+        createGameList();
+    });
 };

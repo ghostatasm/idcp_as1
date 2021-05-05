@@ -24,7 +24,7 @@ const start = (server) => {
 
       // On socket joined a room
       socket.on('joinRoom', (roomData) => {
-        const { _id, creator, opponent } = roomData;
+        const { _id } = roomData;
         const roomSocketName = `ROOM:${_id}`; // Room string identifier
         const room = sockets.to(roomSocketName); // Room Emitter
 
@@ -60,17 +60,8 @@ const start = (server) => {
           room.emit('turn', turnData);
         });
 
-        socket.on('surrender', (surrenderData) => {
-          room.emit('gameover', {
-            // Return the opposite player from the one who surrendered
-            winner: surrenderData.username === creator ? opponent : creator,
-          });
-        });
-
         socket.on('winner', (winnerData) => {
-          room.emit('gameover', {
-            winner: winnerData.winner,
-          });
+          room.emit('gameover', winnerData);
         });
 
         // Chat Events

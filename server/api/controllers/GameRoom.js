@@ -2,29 +2,20 @@ const { GameRoomModel /* , GAMEROOM_STATE */ } = require('../models/GameRoom.js'
 
 // Returns slice of rooms in server
 // TODO: return slice instead of full list of rooms
-const rooms = (req, res) => {
-  GameRoomModel.find({})
-    .then((doc) => res.json(doc))
-    .catch(() => res.status(500).json({ error: 'An error ocurred retrieving the rooms' }));
-};
+const rooms = (req, res) => GameRoomModel.find({})
+  .then((doc) => res.json(doc))
+  .catch(() => res.status(500).json({ error: 'An error ocurred retrieving the rooms' }));
 
 
 // Returns room specified in QUERY ID
 // Returns room in session if no ID specified in QUERY
 const room = (req, res) => {
-  if (!req.query.id && !req.session.room) {
-    return res.status(400).json({ error: 'Room ID is undefined in request body and no room in session' });
-  }
-
   // Search by ID
   if (req.query.id) {
     return GameRoomModel.findOneByID(req.query.id)
-      .then((doc) => {
-        res.json(doc);
-      })
+      .then((doc) => res.json(doc))
       .catch((err) => res.status(err.statusCode).json({ error: err.message }));
   }
-
   // Return room in session
   return res.json(req.session.room);
 };
@@ -78,9 +69,9 @@ const leave = (req, res) => {
   const username = req.session.account.username;
 
   return GameRoomModel.leave(id, username)
-    .then((doc) => {
+    .then(() => {
       req.session.room = null;
-      return doc;
+      return res.json({});
     })
     .catch((err) => res.status(err.statusCode).json({ error: err.message }));
 };

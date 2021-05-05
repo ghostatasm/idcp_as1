@@ -5,15 +5,7 @@ var socket; // Client connection socket
 
 var init = function init() {
   // Connect to the base URL
-  socket = io(window.location.origin);
-  socket.on('message', function (response) {
-    updateChat(response);
-  });
-  sendRequest('GET', '/account', null, function (account) {
-    socket.emit('account', {
-      account: account
-    });
-  }); // DOM Events
+  socket = io(window.location.origin); // DOM Events
 
   var accountButton = document.querySelector("#accountButton");
   accountButton.addEventListener('click', function (e) {
@@ -23,12 +15,42 @@ var init = function init() {
   var gamesButton = document.querySelector("#gamesButton");
   gamesButton.addEventListener('click', function (e) {
     e.preventDefault();
-    createGameList();
+    createGameList(); // Check if the player is in a game
+
+    sendRequest('GET', 'room', null, function (response) {
+      // If there is a game in session show it
+      if (response && response.board) {
+        socket.emit('joinRoom', response);
+        createGame(response.board);
+      }
+    });
   }); // Default View
 
-  createGameList();
+  createGameList(); // Get session information
+
+  sendRequest('GET', '/account', "_csrf=".concat(csrf), function (account) {
+    socket.emit('account', {
+      account: account
+    }); // Check if the player is in a game
+
+    sendRequest('GET', '/room', null, function (response) {
+      // If there is a game in session show it
+      if (response && response.board) {
+        socket.emit('joinRoom', response);
+        createGame(response.board);
+      }
+    });
+  });
 };
 "use strict";
+
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
+
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+
+function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
 
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
@@ -46,8 +68,8 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 var isPlayersTurn = function isPlayersTurn(account, room) {
   return room.players[+room.nextPlayer] === account.username;
 }; // Returns index of cell to highlight
-// -1 If all should be highlighted
-// -2 None should be highlighted
+// -1 means all should be highlighted
+// Anything except 0-8 means none highlighted
 
 
 var getCellToHighlight = function getCellToHighlight(room) {
@@ -74,9 +96,9 @@ var AccountWindow = function AccountWindow(props) {
     className: "gamesPlayed"
   }, props.account.gamesPlayed), /*#__PURE__*/React.createElement("label", {
     htmlFor: "wonLost"
-  }, "Won/Lost:"), /*#__PURE__*/React.createElement("p", {
+  }, "Won/Tied/Lost:"), /*#__PURE__*/React.createElement("p", {
     className: "wonLost"
-  }, props.account.gamesWon, "/", props.account.gamesLost)));
+  }, props.account.gamesWon, "/", props.account.gamesTied, "/", props.account.gamesLost)));
 };
 
 var GameList = function GameList(props) {
@@ -103,7 +125,7 @@ var GameList = function GameList(props) {
   })), /*#__PURE__*/React.createElement("table", null, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Room Name"), /*#__PURE__*/React.createElement("th", null, "Creator"), /*#__PURE__*/React.createElement("th", null, "State"), /*#__PURE__*/React.createElement("th", null, "Turn"), /*#__PURE__*/React.createElement("th", null, "Join"))), /*#__PURE__*/React.createElement("tbody", null, props.rooms.map(function (room) {
     return /*#__PURE__*/React.createElement("tr", {
       key: room._id
-    }, /*#__PURE__*/React.createElement("th", null, room.name), /*#__PURE__*/React.createElement("th", null, room.creator), /*#__PURE__*/React.createElement("th", null, room.opponent ? 'Playing' : 'Waiting'), /*#__PURE__*/React.createElement("th", null, room.turn), /*#__PURE__*/React.createElement("th", null, /*#__PURE__*/React.createElement("button", {
+    }, /*#__PURE__*/React.createElement("th", null, room.name), /*#__PURE__*/React.createElement("th", null, room.creator), /*#__PURE__*/React.createElement("th", null, room.state), /*#__PURE__*/React.createElement("th", null, room.turn), /*#__PURE__*/React.createElement("th", null, /*#__PURE__*/React.createElement("button", {
       className: "btnJoin",
       onClick: function onClick(e) {
         return handleJoin(e, room._id);
@@ -257,9 +279,21 @@ var UTTTGrid = function UTTTGrid(props) {
 };
 
 var Chat = function Chat(props) {
+  var _React$useState5 = React.useState(props.messages ? props.messages : []),
+      _React$useState6 = _slicedToArray(_React$useState5, 2),
+      messages = _React$useState6[0],
+      setMessages = _React$useState6[1];
+
+  socket.on('message', function (response) {
+    setMessages([].concat(_toConsumableArray(messages), [response]));
+  });
   return /*#__PURE__*/React.createElement("div", {
     className: "chat"
-  }, /*#__PURE__*/React.createElement("ul", null), /*#__PURE__*/React.createElement("input", {
+  }, /*#__PURE__*/React.createElement("ul", null, messages.map(function (msg) {
+    return /*#__PURE__*/React.createElement("li", {
+      key: msg.id
+    }, /*#__PURE__*/React.createElement("b", null, msg.username), ": ", msg.text);
+  })), /*#__PURE__*/React.createElement("input", {
     type: "text",
     name: "message",
     id: "textMessage",
@@ -271,10 +305,10 @@ var Chat = function Chat(props) {
 };
 
 var TurnLabel = function TurnLabel(props) {
-  var _React$useState5 = React.useState(''),
-      _React$useState6 = _slicedToArray(_React$useState5, 2),
-      turnText = _React$useState6[0],
-      setTurnText = _React$useState6[1]; // Init visibility
+  var _React$useState7 = React.useState(''),
+      _React$useState8 = _slicedToArray(_React$useState7, 2),
+      turnText = _React$useState8[0],
+      setTurnText = _React$useState8[1]; // Init visibility
 
 
   socket.on('joinRoom', function (room) {
@@ -403,24 +437,17 @@ var handleTurn = function handleTurn(e, utttCell, tttCell) {
 
 
 var handleSurrender = function handleSurrender(e) {
-  socket.emit('surrender');
+  sendRequest('POST', '/surrender', "_csrf=".concat(csrf), function (response) {// TODO
+  });
 }; // Function to leave a room
 
 
 var handleLeave = function handleLeave(e) {
-  socket.emit('leaveRoom');
-  createGameList();
-}; // Function to add new message to chat
-
-
-var updateChat = function updateChat(data) {
-  var chat = document.querySelector(".chat ul");
-
-  if (chat) {
-    var message = document.createElement("li");
-    message.innerHTML = "<b>".concat(data.username, "</b>: ").concat(data.text);
-    chat.appendChild(message);
-  }
+  sendRequest('POST', '/leave', "_csrf=".concat(csrf), function (response) {
+    console.log(response);
+    socket.emit('leaveRoom');
+    createGameList();
+  });
 };
 "use strict";
 
@@ -483,23 +510,27 @@ var handleRedirect = function handleRedirect(response) {
   window.location = response.redirect;
 };
 
-var sendRequest = function sendRequest(method, url, body, success) {
+var sendRequest = function sendRequest(method, url, body, callback) {
   var xhr = new XMLHttpRequest();
   xhr.open(method, url);
   xhr.setRequestHeader('Accept', 'application/json');
 
   xhr.onload = function (e) {
-    var response = JSON.parse(xhr.response);
+    try {
+      var response = JSON.parse(xhr.response);
 
-    if (response.error) {
-      handleError(response.error);
-    } else {
-      success(response);
+      if (response && response.error) {
+        handleError(response.error);
+      } else {
+        callback(response);
+      }
+    } catch (err) {
+      console.log(err);
     }
   };
 
   xhr.onerror = function (err) {
-    handleError(err);
+    console.log("An error ocurred trying to send your request to ".concat(url));
   };
 
   if (body) {

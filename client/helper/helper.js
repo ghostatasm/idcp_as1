@@ -17,21 +17,27 @@ const handleRedirect = (response) => {
     window.location = response.redirect;
 };
 
-const sendRequest = (method, url, body, success) => {
+const sendRequest = (method, url, body, callback) => {
     const xhr = new XMLHttpRequest();
     xhr.open(method, url);
     xhr.setRequestHeader('Accept', 'application/json');
     xhr.onload = e => {
-        const response = JSON.parse(xhr.response);
-        if (response.error) {
-            handleError(response.error);
+        try {
+            const response = JSON.parse(xhr.response);
+
+            if (response && response.error) {
+                handleError(response.error);
+            }
+            else {
+                callback(response);
+            }
         }
-        else {
-            success(response);
+        catch (err) {
+            console.log(err);
         }
     };
     xhr.onerror = (err) => {
-        handleError(err)
+        console.log(`An error ocurred trying to send your request to ${url}`)
     };
     if (body) {
         xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
