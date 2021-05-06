@@ -234,8 +234,11 @@ const TurnLabel = (props) => {
 };
 
 const Game = (props) => {
+    const inGame = isPlayerInGame(account, room);
+
     let surrenderButton = null;
-    if (isPlayerInGame(account, room)) {
+
+    if (inGame) {
         surrenderButton = <button id="btnSurrender" onClick={handleSurrender}>Surrender</button>;
     }
 
@@ -248,7 +251,8 @@ const Game = (props) => {
                     <UTTTGrid board={props.board} />
                 </div>
 
-                {isPlayerInGame(account, room) ? <TurnLabel /> : null}
+                {inGame ? <TurnLabel /> : null}
+                {inGame ? <p id="error-display"></p> : null}
 
                 {surrenderButton}
                 <button id="btnLeaveRoom" onClick={handleLeave}>Leave</button>

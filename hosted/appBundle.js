@@ -390,9 +390,10 @@ var TurnLabel = function TurnLabel(props) {
 };
 
 var Game = function Game(props) {
+  var inGame = isPlayerInGame(account, room);
   var surrenderButton = null;
 
-  if (isPlayerInGame(account, room)) {
+  if (inGame) {
     surrenderButton = /*#__PURE__*/React.createElement("button", {
       id: "btnSurrender",
       onClick: handleSurrender
@@ -407,7 +408,9 @@ var Game = function Game(props) {
     className: "board"
   }, /*#__PURE__*/React.createElement(UTTTGrid, {
     board: props.board
-  })), isPlayerInGame(account, room) ? /*#__PURE__*/React.createElement(TurnLabel, null) : null, surrenderButton, /*#__PURE__*/React.createElement("button", {
+  })), inGame ? /*#__PURE__*/React.createElement(TurnLabel, null) : null, inGame ? /*#__PURE__*/React.createElement("p", {
+    id: "error-display"
+  }) : null, surrenderButton, /*#__PURE__*/React.createElement("button", {
     id: "btnLeaveRoom",
     onClick: handleLeave
   }, "Leave")), /*#__PURE__*/React.createElement("div", {
