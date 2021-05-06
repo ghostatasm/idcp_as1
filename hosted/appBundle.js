@@ -1,18 +1,21 @@
 "use strict";
 
 var socket; // Client connection socket
+
+var account; // Cache for account in session
+
+var room; // Cache for room in session
 // Init
 
 var init = function init() {
   // Connect to the base URL
   socket = io(window.location.origin); // Socket listeners
 
-  socket.on('playerLeft', function (response) {
-    if (response.room.winner !== '') {
-      socket.emit('winner', {
-        winner: response.room.winner
-      });
-    }
+  socket.on('updateRoom', function (updateRoomData) {
+    // Update cached room
+    room = updateRoomData.room; // Let the client know it was updated
+
+    document.dispatchEvent(new Event('roomUpdated'));
   }); // DOM Events
 
   var accountButton = document.querySelector("#accountButton");
@@ -25,12 +28,15 @@ var init = function init() {
     e.preventDefault();
     createGameList(); // Check if the player is in a game
 
-    sendRequest('GET', 'room', null, function (response) {
+    sendRequest('GET', '/room', null, function (roomResponse) {
       // If there is a game in session join it
-      if (response) {
-        sendRequest('POST', '/rejoin', "_csrf=".concat(csrf, "&id=").concat(response._id), function (joinResponse) {
-          socket.emit('joinRoom', joinResponse);
-          createGame(joinResponse.board);
+      if (roomResponse) {
+        room = roomResponse;
+        sendRequest('POST', '/rejoin', "_csrf=".concat(csrf, "&id=").concat(room._id), function (rejoinResponse) {
+          socket.emit('joinRoom', {
+            room: rejoinResponse
+          });
+          createGame(rejoinResponse.board);
         });
       }
     });
@@ -38,17 +44,22 @@ var init = function init() {
 
   createGameList(); // Get session information
 
-  sendRequest('GET', '/account', "_csrf=".concat(csrf), function (account) {
+  sendRequest('GET', '/account', "_csrf=".concat(csrf), function (accountResponse) {
+    // Set session information
+    account = accountResponse;
     socket.emit('account', {
       account: account
     }); // Check if the player is in a game
 
-    sendRequest('GET', '/room', null, function (response) {
+    sendRequest('GET', '/room', null, function (roomResponse) {
       // If there is a game in session join it
-      if (response) {
-        sendRequest('POST', '/rejoin', "_csrf=".concat(csrf, "&id=").concat(response._id), function (joinResponse) {
-          socket.emit('joinRoom', joinResponse);
-          createGame(joinResponse.board);
+      if (roomResponse) {
+        room = roomResponse;
+        sendRequest('POST', '/rejoin', "_csrf=".concat(csrf, "&id=").concat(room._id), function (rejoinResponse) {
+          socket.emit('joinRoom', {
+            room: rejoinResponse
+          });
+          createGame(rejoinResponse.board);
         });
       }
     });
@@ -76,14 +87,9 @@ function _iterableToArrayLimit(arr, i) { if (typeof Symbol === "undefined" || !(
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
-// Helper functions
-var isPlayersTurn = function isPlayersTurn(account, room) {
-  return room.players[+room.nextPlayer] === account.username;
-}; // Returns index of cell to highlight
+// Returns index of cell to highlight
 // -1 means all should be highlighted
 // Anything except 0-8 means none highlighted
-
-
 var getCellToHighlight = function getCellToHighlight(account, room) {
   // If the game is not running, don't highlight anything
   if (room.state !== 'Playing' || !isPlayersTurn(account, room)) {
@@ -191,38 +197,22 @@ var TTTGrid = function TTTGrid(props) {
   var _React$useState = React.useState('tttGrid'),
       _React$useState2 = _slicedToArray(_React$useState, 2),
       classes = _React$useState2[0],
-      setClasses = _React$useState2[1];
+      setClasses = _React$useState2[1]; // Helper function that sets a class on a cell to highlight
 
-  var updateHighlight = function updateHighlight(response) {
-    var index = +getCellToHighlight(response.account, response.room);
+
+  var updateHighlight = function updateHighlight() {
+    var index = +getCellToHighlight(account, room);
 
     if (index === -1 || index === props.utttcell) {
       setClasses('tttGrid highlight');
     } else {
       setClasses('tttGrid');
     }
-  };
+  }; // Listen for room updates
 
-  socket.on('joinRoom', function (response) {
-    updateHighlight(response);
-  });
-  socket.on('playerJoined', function (response) {
-    sendRequest('GET', '/account', "_csrf=".concat(csrf), function (account) {
-      response.account = account;
-      updateHighlight(response);
-    });
-  });
-  socket.on('playerLeft', function (response) {
-    sendRequest('GET', '/account', "_csrf=".concat(csrf), function (account) {
-      response.account = account;
-      updateHighlight(response);
-    });
-  });
-  socket.on('turn', function (response) {
-    sendRequest('GET', '/account', "_csrf=".concat(csrf), function (account) {
-      response.account = account;
-      updateHighlight(response);
-    });
+
+  document.addEventListener('roomUpdated', function (e) {
+    updateHighlight();
   });
   return /*#__PURE__*/React.createElement("table", {
     className: classes
@@ -287,12 +277,12 @@ var UTTTGrid = function UTTTGrid(props) {
   var _React$useState3 = React.useState(props.board),
       _React$useState4 = _slicedToArray(_React$useState3, 2),
       board = _React$useState4[0],
-      setBoard = _React$useState4[1]; // Listen for board updates
+      setBoard = _React$useState4[1]; // Listen for room updates
 
 
-  socket.on('turn', function (response) {
-    // Update board
-    setBoard(response.room.board);
+  document.addEventListener('roomUpdated', function (e) {
+    // Update the board
+    setBoard(room.board);
   });
   return /*#__PURE__*/React.createElement("table", {
     className: "utttGrid"
@@ -378,9 +368,9 @@ var TurnLabel = function TurnLabel(props) {
       turnText = _React$useState8[0],
       setTurnText = _React$useState8[1];
 
-  var updateLabel = function updateLabel(response) {
-    if (response.room.state === 'Playing') {
-      if (isPlayersTurn(response.account, response.room)) {
+  var updateLabel = function updateLabel() {
+    if (room.state === 'Playing') {
+      if (isPlayersTurn(account, room)) {
         setTurnText('It is your turn!');
       } else {
         setTurnText('Wait for your opponent to play');
@@ -388,30 +378,11 @@ var TurnLabel = function TurnLabel(props) {
     } else {
       setTurnText('The game has not yet started');
     }
-  }; // Init visibility
+  }; // Listen for room updates
 
 
-  socket.on('joinRoom', function (response) {
-    updateLabel(response);
-  }); // Every turn, check if it is the player's turn and update text
-
-  socket.on('turn', function (response) {
-    sendRequest('GET', '/account', "_csrf=".concat(csrf), function (account) {
-      response.account = account;
-      updateLabel(response);
-    });
-  });
-  socket.on('playerJoined', function (response) {
-    sendRequest('GET', '/account', "_csrf=".concat(csrf), function (account) {
-      response.account = account;
-      updateLabel(response);
-    });
-  });
-  socket.on('playerLeft', function (response) {
-    sendRequest('GET', '/account', "_csrf=".concat(csrf), function (account) {
-      response.account = account;
-      updateLabel(response);
-    });
+  document.addEventListener('roomUpdated', function (e) {
+    updateLabel();
   });
   return /*#__PURE__*/React.createElement("div", {
     className: "turnLabel"
@@ -419,6 +390,15 @@ var TurnLabel = function TurnLabel(props) {
 };
 
 var Game = function Game(props) {
+  var surrenderButton = null;
+
+  if (isPlayerInGame(account, room)) {
+    surrenderButton = /*#__PURE__*/React.createElement("button", {
+      id: "btnSurrender",
+      onClick: handleSurrender
+    }, "Surrender");
+  }
+
   return /*#__PURE__*/React.createElement("div", {
     className: "game"
   }, /*#__PURE__*/React.createElement("div", {
@@ -427,10 +407,7 @@ var Game = function Game(props) {
     className: "board"
   }, /*#__PURE__*/React.createElement(UTTTGrid, {
     board: props.board
-  })), /*#__PURE__*/React.createElement(TurnLabel, null), /*#__PURE__*/React.createElement("button", {
-    id: "btnSurrender",
-    onClick: handleSurrender
-  }, "Surrender"), /*#__PURE__*/React.createElement("button", {
+  })), isPlayerInGame(account, room) ? /*#__PURE__*/React.createElement(TurnLabel, null) : null, surrenderButton, /*#__PURE__*/React.createElement("button", {
     id: "btnLeaveRoom",
     onClick: handleLeave
   }, "Leave")), /*#__PURE__*/React.createElement("div", {
@@ -442,6 +419,7 @@ var Game = function Game(props) {
 // React component factories
 var createAccountWindow = function createAccountWindow() {
   sendRequest('GET', '/account', null, function (response) {
+    account = response;
     ReactDOM.render( /*#__PURE__*/React.createElement(AccountWindow, {
       account: response
     }), document.querySelector("#content"));
@@ -496,7 +474,12 @@ var handleCreate = function handleCreate(e) {
 
   var createForm = document.querySelector("#createForm");
   sendRequest(createForm.method, createForm.action, serialize(createForm), function (response) {
-    socket.emit('joinRoom', response);
+    socket.emit('joinRoom', {
+      room: response
+    });
+    room = response; // Let the client know it was updated
+
+    document.dispatchEvent(new Event('roomUpdated'));
     createGame(response.board);
   });
   return false;
@@ -505,7 +488,9 @@ var handleCreate = function handleCreate(e) {
 
 var handleJoin = function handleJoin(e, roomID) {
   sendRequest('POST', '/join', "_csrf=".concat(csrf, "&id=").concat(roomID), function (response) {
-    socket.emit('joinRoom', response);
+    socket.emit('joinRoom', {
+      room: response
+    });
     createGame(response.board);
   });
 }; // Function to send a message in a UTTT room chat
@@ -538,33 +523,29 @@ var handleTurn = function handleTurn(e, utttCell, tttCell) {
     tttCell: tttCell
   };
   sendRequest('POST', '/turn', encodeObjectToBody(data), function (response) {
-    socket.emit('turn', response);
-
-    if (response.winner !== '') {
-      socket.emit('winner', {
-        winner: response.winner
-      });
-    }
+    socket.emit('turn', {
+      room: response
+    });
   });
 }; // Function to flag that player has surrendered
 
 
 var handleSurrender = function handleSurrender(e) {
   sendRequest('POST', '/surrender', "_csrf=".concat(csrf), function (response) {
-    if (response.winner !== '') {
-      socket.emit('winner', {
-        winner: response.winner
-      });
-    }
+    socket.emit('surrender', {
+      room: response
+    });
   });
 }; // Function to leave a room
 
 
 var handleLeave = function handleLeave(e) {
   sendRequest('POST', '/leave', "_csrf=".concat(csrf), function (response) {
-    socket.emit('leaveRoom', response);
+    socket.emit('leaveRoom', {
+      room: response
+    });
+    createGameList();
   });
-  createGameList();
 }; // Function to grab rooms in server and re-render them
 
 
@@ -612,6 +593,14 @@ var getTTTWinner = function getTTTWinner(tttBoard) {
 
 
   return 'TIE';
+};
+
+var isPlayerInGame = function isPlayerInGame(account, room) {
+  return room.players[0] === account.username || room.players[1] === account.username;
+};
+
+var isPlayersTurn = function isPlayersTurn(account, room) {
+  return room.players[+room.nextPlayer] === account.username;
 };
 "use strict";
 

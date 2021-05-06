@@ -1,6 +1,8 @@
 // React component factories
 const createAccountWindow = () => {
     sendRequest('GET', '/account', null, (response) => {
+        account = response;
+
         ReactDOM.render(
             <AccountWindow account={response} />,
             document.querySelector("#content")
@@ -21,7 +23,7 @@ const createGameList = () => {
 
 const createGame = (board) => {
     ReactDOM.render(
-        <Game board={board}/>,
+        <Game board={board} />,
         document.querySelector("#content")
     );
 };

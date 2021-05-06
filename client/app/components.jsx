@@ -1,8 +1,3 @@
-// Helper functions
-const isPlayersTurn = (account, room) => {
-    return room.players[+room.nextPlayer] === account.username;
-};
-
 // Returns index of cell to highlight
 // -1 means all should be highlighted
 // Anything except 0-8 means none highlighted
@@ -101,8 +96,9 @@ const GameList = (props) => {
 const TTTGrid = (props) => {
     const [classes, setClasses] = React.useState('tttGrid');
 
-    const updateHighlight = (response) => {
-        const index = +getCellToHighlight(response.account, response.room);
+    // Helper function that sets a class on a cell to highlight
+    const updateHighlight = () => {
+        const index = +getCellToHighlight(account, room);
         if (index === -1 || index === props.utttcell) {
             setClasses('tttGrid highlight');
         }
@@ -111,29 +107,9 @@ const TTTGrid = (props) => {
         }
     };
 
-    socket.on('joinRoom', response => {
-        updateHighlight(response);
-    });
-
-    socket.on('playerJoined', response => {
-        sendRequest('GET', '/account', `_csrf=${csrf}`, account => {
-            response.account = account;
-            updateHighlight(response);
-        });
-    });
-
-    socket.on('playerLeft', response => {
-        sendRequest('GET', '/account', `_csrf=${csrf}`, account => {
-            response.account = account;
-            updateHighlight(response);
-        });
-    });
-
-    socket.on('turn', response => {
-        sendRequest('GET', '/account', `_csrf=${csrf}`, account => {
-            response.account = account;
-            updateHighlight(response);
-        });
+    // Listen for room updates
+    document.addEventListener('roomUpdated', e => {
+        updateHighlight();
     });
 
     return (
@@ -162,10 +138,10 @@ const TTTGrid = (props) => {
 const UTTTGrid = (props) => {
     const [board, setBoard] = React.useState(props.board);
 
-    // Listen for board updates
-    socket.on('turn', response => {
-        // Update board
-        setBoard(response.room.board);
+    // Listen for room updates
+    document.addEventListener('roomUpdated', e => {
+        // Update the board
+        setBoard(room.board);
     });
 
     return (
@@ -231,9 +207,9 @@ const Chat = (props) => {
 const TurnLabel = (props) => {
     const [turnText, setTurnText] = React.useState('');
 
-    const updateLabel = (response) => {
-        if (response.room.state === 'Playing') {
-            if (isPlayersTurn(response.account, response.room)) {
+    const updateLabel = () => {
+        if (room.state === 'Playing') {
+            if (isPlayersTurn(account, room)) {
                 setTurnText('It is your turn!')
             }
             else {
@@ -245,31 +221,9 @@ const TurnLabel = (props) => {
         }
     }
 
-    // Init visibility
-    socket.on('joinRoom', response => {
-        updateLabel(response);
-    });
-
-    // Every turn, check if it is the player's turn and update text
-    socket.on('turn', response => {
-        sendRequest('GET', '/account', `_csrf=${csrf}`, account => {
-            response.account = account;
-            updateLabel(response);
-        });
-    });
-
-    socket.on('playerJoined', response => {
-        sendRequest('GET', '/account', `_csrf=${csrf}`, account => {
-            response.account = account;
-            updateLabel(response);
-        });
-    });
-
-    socket.on('playerLeft', response => {
-        sendRequest('GET', '/account', `_csrf=${csrf}`, account => {
-            response.account = account;
-            updateLabel(response);
-        });
+    // Listen for room updates
+    document.addEventListener('roomUpdated', e => {
+        updateLabel();
     });
 
     return (
@@ -280,6 +234,11 @@ const TurnLabel = (props) => {
 };
 
 const Game = (props) => {
+    let surrenderButton = null;
+    if (isPlayerInGame(account, room)) {
+        surrenderButton = <button id="btnSurrender" onClick={handleSurrender}>Surrender</button>;
+    }
+
     return (
         <div className="game">
             <div className="gameContainer">
@@ -289,9 +248,9 @@ const Game = (props) => {
                     <UTTTGrid board={props.board} />
                 </div>
 
-                <TurnLabel />
+                {isPlayerInGame(account, room) ? <TurnLabel /> : null}
 
-                <button id="btnSurrender" onClick={handleSurrender}>Surrender</button>
+                {surrenderButton}
                 <button id="btnLeaveRoom" onClick={handleLeave}>Leave</button>
             </div>
 

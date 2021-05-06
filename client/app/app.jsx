@@ -1,4 +1,6 @@
 let socket; // Client connection socket
+let account; // Cache for account in session
+let room // Cache for room in session
 
 // Init
 const init = () => {
@@ -6,10 +8,11 @@ const init = () => {
     socket = io(window.location.origin);
 
     // Socket listeners
-    socket.on('playerLeft', response => {
-        if (response.room.winner !== '') {
-            socket.emit('winner', { winner: response.room.winner });
-        }
+    socket.on('updateRoom', updateRoomData => {
+        // Update cached room
+        room = updateRoomData.room;
+        // Let the client know it was updated
+        document.dispatchEvent(new Event('roomUpdated'));
     });
 
     // DOM Events
@@ -27,12 +30,16 @@ const init = () => {
         createGameList();
 
         // Check if the player is in a game
-        sendRequest('GET', 'room', null, response => {
+        sendRequest('GET', '/room', null, roomResponse => {
             // If there is a game in session join it
-            if (response) {
-                sendRequest('POST', '/rejoin', `_csrf=${csrf}&id=${response._id}`, joinResponse => {
-                    socket.emit('joinRoom', joinResponse);
-                    createGame(joinResponse.board);
+            if (roomResponse) {
+                room = roomResponse;
+
+                sendRequest('POST', '/rejoin', `_csrf=${csrf}&id=${room._id}`, rejoinResponse => {
+                    socket.emit('joinRoom',  {
+                        room: rejoinResponse,
+                    });
+                    createGame(rejoinResponse.board);
                 });
             }
         });
@@ -42,18 +49,25 @@ const init = () => {
     createGameList();
 
     // Get session information
-    sendRequest('GET', '/account', `_csrf=${csrf}`, account => {
+    sendRequest('GET', '/account', `_csrf=${csrf}`, accountResponse => {
+        // Set session information
+        account = accountResponse;
+        
         socket.emit('account', {
             account,
         });
 
         // Check if the player is in a game
-        sendRequest('GET', '/room', null, response => {
+        sendRequest('GET', '/room', null, roomResponse => {
             // If there is a game in session join it
-            if (response) {
-                sendRequest('POST', '/rejoin', `_csrf=${csrf}&id=${response._id}`, joinResponse => {
-                    socket.emit('joinRoom', joinResponse);
-                    createGame(joinResponse.board);
+            if (roomResponse) {
+                room = roomResponse;
+
+                sendRequest('POST', '/rejoin', `_csrf=${csrf}&id=${room._id}`, rejoinResponse => {
+                    socket.emit('joinRoom', {
+                        room: rejoinResponse,
+                    });
+                    createGame(rejoinResponse.board);
                 });
             }
         });

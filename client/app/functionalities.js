@@ -33,7 +33,14 @@ const handleCreate = (e) => {
 
     const createForm = document.querySelector("#createForm");
     sendRequest(createForm.method, createForm.action, serialize(createForm), response => {
-        socket.emit('joinRoom', response);
+        socket.emit('joinRoom', {
+            room: response,
+        });
+        
+        room = response;
+        // Let the client know it was updated
+        document.dispatchEvent(new Event('roomUpdated'));
+        
         createGame(response.board);
     });
 
@@ -43,7 +50,10 @@ const handleCreate = (e) => {
 // Function to join a UTTT room/game
 const handleJoin = (e, roomID) => {
     sendRequest('POST', '/join', `_csrf=${csrf}&id=${roomID}`, response => {
-        socket.emit('joinRoom', response);
+        socket.emit('joinRoom', {
+            room: response,
+        });
+
         createGame(response.board);
     });
 };
@@ -77,29 +87,30 @@ const handleTurn = (e, utttCell, tttCell) => {
     };
 
     sendRequest('POST', '/turn', encodeObjectToBody(data), response => {
-        socket.emit('turn', response);
-        if (response.winner !== '') {
-            socket.emit('winner', { winner: response.winner });
-        }
+        socket.emit('turn', {
+            room: response,
+        });
     });
 };
 
 // Function to flag that player has surrendered
 const handleSurrender = (e) => {
     sendRequest('POST', '/surrender', `_csrf=${csrf}`, response => {
-        if (response.winner !== '') {
-            socket.emit('winner', { winner: response.winner });
-        }
+        socket.emit('surrender', {
+            room: response,
+        });
     });
 };
 
 // Function to leave a room
 const handleLeave = (e) => {
     sendRequest('POST', '/leave', `_csrf=${csrf}`, response => {
-        socket.emit('leaveRoom', response);
-    });
+        socket.emit('leaveRoom', {
+            room: response
+        });
 
-    createGameList();
+        createGameList();
+    });
 };
 
 // Function to grab rooms in server and re-render them

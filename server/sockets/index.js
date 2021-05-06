@@ -2,6 +2,13 @@ const socketIO = require('socket.io');
 
 const { Message } = require('./classes');
 
+// Helper functions
+const isPlayerInGame = (account, room) => {
+  const isPlayer1 = room.players[0] === account.username;
+  const isPlayer2 = room.players[1] === account.username;
+  return isPlayer1 || isPlayer2;
+};
+
 /**
  * Starts socket.io WebSockets and returns the socket
  * @param {Object} server - Your Express server (returned from .listen
@@ -23,35 +30,38 @@ const start = (server) => {
       const { account } = accountData;
 
       // On socket joined a room
-      socket.on('joinRoom', (roomData) => {
-        const { _id } = roomData;
-        const roomSocketName = `ROOM:${_id}`; // Room string identifier
-        const room = sockets.to(roomSocketName); // Room Emitter
+      socket.on('joinRoom', (joinRoomData) => {
+        let roomData = joinRoomData.room; // Cache of room state in DB
+        const { _id } = roomData; // Immutable ID of room
+        const roomName = `GAME_ROOM:${_id}`; // Room string identifier
+        const room = sockets.to(roomName); // Room Emitter
 
-        socket.join(roomSocketName);
-
-        socket.emit('joinRoom',
-          {
-            account,
-            room: roomData,
-          });
+        // Join the socket to the room
+        socket.join(roomName);
 
         // If this is a player
-        if (account.username === roomData.players[0] || account.username === roomData.players[1]) {
-          room.emit('playerJoined', {
-            player: account,
-            room: roomData,
+        if (isPlayerInGame(account, roomData)) {
+          // Let sockets in room know about changes to room in DB
+          roomData = joinRoomData.room;
+          room.emit('updateRoom', {
+            room: joinRoomData.room,
           });
 
+
+          // Let sockets in room know a player joined
+          room.emit('playerJoined', {
+            player: account,
+            room: joinRoomData.room,
+          });
+
+          // Emit a join message to the chat
           room.emit('message', new Message(
             'server',
             `${account.username} has joined the room`,
           ));
 
-          // Room events
+          // Player is in Room Events
           socket.on('disconnect', () => {
-            socket.leave(roomSocketName);
-
             room.emit('message', new Message(
               'server',
               `${account.username} has disconnected from the room`,
@@ -59,34 +69,87 @@ const start = (server) => {
           });
 
           socket.on('leaveRoom', (leaveRoomData) => {
-            socket.leave(roomSocketName);
+            // Leave the socket from the room
+            socket.leave(roomName);
 
+            // Let sockets in room know about changes to room in DB
+            roomData = leaveRoomData.room;
+            room.emit('updateRoom', {
+              room: leaveRoomData.room,
+            });
+
+            // Let sockets in room know a player left the room
             room.emit('playerLeft', {
               player: account,
               room: leaveRoomData,
             });
 
+            // Emit a leave message to the chat
             room.emit('message', new Message(
               'server',
               `${account.username} has left the room`,
             ));
+
+            // Check if there was a winner
+            if (roomData.winner !== '') {
+              // If so, emit a game over
+              socket.emit('gameover', {
+                winner: roomData.winner,
+              });
+
+              room.emit('message', new Message(
+                'server',
+                `${roomData.winner} wins the game!`,
+              ));
+            }
           });
 
           // Game Events
           socket.on('turn', (turnData) => {
+            // Let sockets in room know about changes to room in DB
+            roomData = turnData.room;
+            room.emit('updateRoom', {
+              room: turnData.room,
+            });
+
             room.emit('turn', {
               player: account,
               room: turnData,
             });
+
+            // Check if there was a winner
+            if (roomData.winner !== '') {
+              // If so, emit a game over
+              socket.emit('gameover', {
+                winner: roomData.winner,
+              });
+
+              room.emit('message', new Message(
+                'server',
+                `${roomData.winner} wins the game!`,
+              ));
+            }
           });
 
-          socket.on('winner', (winnerData) => {
-            room.emit('gameover', winnerData);
+          socket.on('surrender', (surrenderData) => {
+            // Let sockets in room know about changes to room in DB
+            roomData = surrenderData.room;
+            room.emit('updateRoom', {
+              room: surrenderData.room,
+            });
 
-            room.emit('message', new Message(
-              'server',
-              `${winnerData.winner} wins the game!`,
-            ));
+            // Check if there was a winner
+            if (roomData.winner !== '') {
+              // If so, emit a game over
+              socket.emit('gameover', {
+                winner: roomData.winner,
+              });
+
+              room.emit('message', new Message(
+                'server',
+                `${roomData.winner} wins the game!`,
+              ));
+            }
           });
 
           // Chat Events
@@ -98,15 +161,11 @@ const start = (server) => {
           });
         } else {
           // This is a spectator
-          const spectatorRoomSocketName = `ROOM:SPECTATORS:${_id}`; // Spectator room identifier
-          const spectatorRoom = sockets.to(spectatorRoomSocketName);
+          const spectatorRoomName = `GAME_ROOM:SPECTATORS:${_id}`; // Spectator room identifier
+          const spectatorRoom = sockets.to(spectatorRoomName);
 
-          socket.join(spectatorRoomSocketName);
-
-          spectatorRoom.emit('playerJoined', {
-            player: account,
-            room: roomData,
-          });
+          // Join spectator room
+          socket.join(spectatorRoomName);
 
           spectatorRoom.emit('message', new Message(
             'server',
