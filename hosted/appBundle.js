@@ -491,6 +491,8 @@ var handleJoin = function handleJoin(e, roomID) {
     socket.emit('joinRoom', {
       room: response
     });
+    room = response;
+    document.dispatchEvent(new Event('roomUpdated'));
     createGame(response.board);
   });
 }; // Function to send a message in a UTTT room chat
@@ -543,9 +545,11 @@ var handleLeave = function handleLeave(e) {
   sendRequest('POST', '/leave', "_csrf=".concat(csrf), function (response) {
     socket.emit('leaveRoom', {
       room: response
-    });
+    }); // Update game list after response is received
+
     createGameList();
   });
+  createGameList();
 }; // Function to grab rooms in server and re-render them
 
 

@@ -53,6 +53,9 @@ const handleJoin = (e, roomID) => {
         socket.emit('joinRoom', {
             room: response,
         });
+        
+        room = response;
+        document.dispatchEvent(new Event('roomUpdated'));
 
         createGame(response.board);
     });
@@ -109,8 +112,11 @@ const handleLeave = (e) => {
             room: response
         });
 
+        // Update game list after response is received
         createGameList();
     });
+
+    createGameList();
 };
 
 // Function to grab rooms in server and re-render them
