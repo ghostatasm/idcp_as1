@@ -36,11 +36,11 @@ const handleCreate = (e) => {
         socket.emit('joinRoom', {
             room: response,
         });
-        
+
         room = response;
         // Let the client know it was updated
         document.dispatchEvent(new Event('roomUpdated'));
-        
+
         createGame(response.board);
     });
 
@@ -53,7 +53,7 @@ const handleJoin = (e, roomID) => {
         socket.emit('joinRoom', {
             room: response,
         });
-        
+
         room = response;
         document.dispatchEvent(new Event('roomUpdated'));
 
@@ -88,6 +88,11 @@ const handleTurn = (e, utttCell, tttCell) => {
         utttCell,
         tttCell,
     };
+
+    // Clear error display every turn before the response
+    const errorDisplay = document.querySelector('#error-display');
+    if (errorDisplay)
+        errorDisplay.innerHTML = '';
 
     sendRequest('POST', '/turn', encodeObjectToBody(data), response => {
         socket.emit('turn', {

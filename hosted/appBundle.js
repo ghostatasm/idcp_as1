@@ -526,7 +526,10 @@ var handleTurn = function handleTurn(e, utttCell, tttCell) {
     _csrf: csrf,
     utttCell: utttCell,
     tttCell: tttCell
-  };
+  }; // Clear error display every turn before the response
+
+  var errorDisplay = document.querySelector('#error-display');
+  if (errorDisplay) errorDisplay.innerHTML = '';
   sendRequest('POST', '/turn', encodeObjectToBody(data), function (response) {
     socket.emit('turn', {
       room: response
