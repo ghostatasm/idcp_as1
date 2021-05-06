@@ -17,7 +17,6 @@ const createGameList = () => {
             document.querySelector("#content")
         );
     });
-
 };
 
 const createGame = (board) => {

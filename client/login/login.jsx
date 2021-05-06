@@ -41,29 +41,35 @@ const handleSignup = (e) => {
 // React Components
 const LoginWindow = (props) => {
     return (
-        <form id="loginForm" name="loginForm" onSubmit={handleLogin} action="/login" method="POST">
-            <label htmlFor="username">Username: </label>
-            <input id="user" type="text" name="username" placeholder="username" />
-            <label htmlFor="pass">Password: </label>
-            <input id="pass" type="password" name="pass" placeholder="password" />
-            <input type="hidden" name="_csrf" value={props.csrf} />
-            <input type="submit" value="login" />
-        </form>
+        <div id="login-window">
+            <p id="error-display"></p>
+            <form id="loginForm" name="loginForm" onSubmit={handleLogin} action="/login" method="POST">
+                <label htmlFor="username">Username: </label>
+                <input id="user" type="text" name="username" placeholder="username" autoComplete="on" />
+                <label htmlFor="pass">Password: </label>
+                <input id="pass" type="password" name="pass" placeholder="password" autoComplete="on" />
+                <input type="hidden" name="_csrf" value={props.csrf} />
+                <input type="submit" value="Login" />
+            </form>
+        </div>
     );
 };
 
 const SignupWindow = (props) => {
     return (
-        <form id="signupForm" name="signupForm" onSubmit={handleSignup} action="/signup" method="POST">
-            <label htmlFor="username">Username: </label>
-            <input id="user" type="text" name="username" placeholder="username" />
-            <label htmlFor="pass">Password: </label>
-            <input id="pass" type="password" name="pass" placeholder="password" />
-            <label htmlFor="pass2">Password: </label>
-            <input id="pass2" type="password" name="pass2" placeholder="retype password" />
-            <input type="hidden" name="_csrf" value={props.csrf} />
-            <input type="submit" value="signup" />
-        </form>
+        <div id="signup-window">
+            <p id="error-display"></p>
+            <form id="signupForm" name="signupForm" onSubmit={handleSignup} action="/signup" method="POST">
+                <label htmlFor="username">Username: </label>
+                <input id="user" type="text" name="username" placeholder="username" autoComplete="on" />
+                <label htmlFor="pass">Password: </label>
+                <input id="pass" type="password" name="pass" placeholder="password" autoComplete="on" />
+                <label htmlFor="pass2">Password: </label>
+                <input id="pass2" type="password" name="pass2" placeholder="retype password" autoComplete="on" />
+                <input type="hidden" name="_csrf" value={props.csrf} />
+                <input type="submit" value="Signup" />
+            </form>
+        </div>
     );
 };
 

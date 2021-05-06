@@ -84,12 +84,17 @@ var isPlayersTurn = function isPlayersTurn(account, room) {
 // Anything except 0-8 means none highlighted
 
 
-var getCellToHighlight = function getCellToHighlight(room) {
-  if (room.turn <= 0 || getTTTWinner(room.board[room.lastTurn[1]]) !== ' ') {
-    return -1;
-  } else {
-    return room.lastTurn[1];
-  }
+var getCellToHighlight = function getCellToHighlight(account, room) {
+  // If the game is not running, don't highlight anything
+  if (room.state !== 'Playing' || !isPlayersTurn(account, room)) {
+    return -2;
+  } // If it's the first turn or last turn points to a won board highlight all
+  else if (room.turn <= 0 || getTTTWinner(room.board[room.lastTurn[1]]) !== ' ') {
+      return -1;
+    } // Highlight cell that last turn points to
+    else {
+        return room.lastTurn[1];
+      }
 }; // React Components
 
 
@@ -98,37 +103,45 @@ var AccountWindow = function AccountWindow(props) {
     className: "accountWindow"
   }, /*#__PURE__*/React.createElement("h1", null, "Account"), /*#__PURE__*/React.createElement("div", {
     className: "info"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "username-container"
   }, /*#__PURE__*/React.createElement("label", {
     htmlFor: "username"
   }, "Username:"), /*#__PURE__*/React.createElement("p", {
     className: "username"
-  }, props.account.username), /*#__PURE__*/React.createElement("label", {
+  }, props.account.username)), /*#__PURE__*/React.createElement("div", {
+    className: "gamesPlayerContainer"
+  }, /*#__PURE__*/React.createElement("label", {
     htmlFor: "gamesPlayed"
   }, "Games Played:"), /*#__PURE__*/React.createElement("p", {
     className: "gamesPlayed"
-  }, props.account.gamesPlayed), /*#__PURE__*/React.createElement("label", {
+  }, props.account.gamesPlayed)), /*#__PURE__*/React.createElement("div", {
+    className: "wonLostContainer"
+  }, /*#__PURE__*/React.createElement("label", {
     htmlFor: "wonLost"
   }, "Won/Tied/Lost:"), /*#__PURE__*/React.createElement("p", {
     className: "wonLost"
-  }, props.account.gamesWon, "/", props.account.gamesTied, "/", props.account.gamesLost)), /*#__PURE__*/React.createElement("form", {
+  }, props.account.gamesWon, "/", props.account.gamesTied, "/", props.account.gamesLost))), /*#__PURE__*/React.createElement("form", {
     action: "/resetPassword",
     method: "post",
     onSubmit: handleResetPassword,
     id: "resetPasswordForm"
   }, /*#__PURE__*/React.createElement("label", {
     htmlFor: "pass"
-  }, "Password: "), /*#__PURE__*/React.createElement("input", {
+  }, "New Password: "), /*#__PURE__*/React.createElement("input", {
     id: "pass",
     type: "password",
     name: "pass",
-    placeholder: "password"
+    placeholder: "password",
+    autoComplete: "on"
   }), /*#__PURE__*/React.createElement("label", {
     htmlFor: "pass2"
-  }, "Password: "), /*#__PURE__*/React.createElement("input", {
+  }, "New Password: "), /*#__PURE__*/React.createElement("input", {
     id: "pass2",
     type: "password",
     name: "pass2",
-    placeholder: "retype password"
+    placeholder: "retype password",
+    autoComplete: "on"
   }), /*#__PURE__*/React.createElement("input", {
     type: "hidden",
     name: "_csrf",
@@ -160,7 +173,9 @@ var GameList = function GameList(props) {
   }), /*#__PURE__*/React.createElement("input", {
     type: "submit",
     value: "Create Room"
-  })), /*#__PURE__*/React.createElement("table", null, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Room Name"), /*#__PURE__*/React.createElement("th", null, "Creator"), /*#__PURE__*/React.createElement("th", null, "State"), /*#__PURE__*/React.createElement("th", null, "Turn"), /*#__PURE__*/React.createElement("th", null, "Join"))), /*#__PURE__*/React.createElement("tbody", null, props.rooms.map(function (room) {
+  })), /*#__PURE__*/React.createElement("button", {
+    onClick: handleRefresh
+  }, "Refresh Game List"), /*#__PURE__*/React.createElement("table", null, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Room Name"), /*#__PURE__*/React.createElement("th", null, "Creator"), /*#__PURE__*/React.createElement("th", null, "State"), /*#__PURE__*/React.createElement("th", null, "Turn"), /*#__PURE__*/React.createElement("th", null, "Join"))), /*#__PURE__*/React.createElement("tbody", null, props.rooms.length > 0 ? props.rooms.map(function (room) {
     return /*#__PURE__*/React.createElement("tr", {
       key: room._id
     }, /*#__PURE__*/React.createElement("th", null, room.name), /*#__PURE__*/React.createElement("th", null, room.creator), /*#__PURE__*/React.createElement("th", null, room.state), /*#__PURE__*/React.createElement("th", null, room.turn), /*#__PURE__*/React.createElement("th", null, /*#__PURE__*/React.createElement("button", {
@@ -169,7 +184,7 @@ var GameList = function GameList(props) {
         return handleJoin(e, room._id);
       }
     }, "Join")));
-  }))));
+  }) : /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "No rooms found"), /*#__PURE__*/React.createElement("th", null), /*#__PURE__*/React.createElement("th", null), /*#__PURE__*/React.createElement("th", null), /*#__PURE__*/React.createElement("th", null)))));
 };
 
 var TTTGrid = function TTTGrid(props) {
@@ -178,23 +193,36 @@ var TTTGrid = function TTTGrid(props) {
       classes = _React$useState2[0],
       setClasses = _React$useState2[1];
 
-  socket.on('joinRoom', function (response) {
-    var index = +getCellToHighlight(response.room);
+  var updateHighlight = function updateHighlight(response) {
+    var index = +getCellToHighlight(response.account, response.room);
 
     if (index === -1 || index === props.utttcell) {
       setClasses('tttGrid highlight');
     } else {
       setClasses('tttGrid');
     }
+  };
+
+  socket.on('joinRoom', function (response) {
+    updateHighlight(response);
+  });
+  socket.on('playerJoined', function (response) {
+    sendRequest('GET', '/account', "_csrf=".concat(csrf), function (account) {
+      response.account = account;
+      updateHighlight(response);
+    });
+  });
+  socket.on('playerLeft', function (response) {
+    sendRequest('GET', '/account', "_csrf=".concat(csrf), function (account) {
+      response.account = account;
+      updateHighlight(response);
+    });
   });
   socket.on('turn', function (response) {
-    var index = +getCellToHighlight(response.room);
-
-    if (index === -1 || index === props.utttcell) {
-      setClasses(classes + ' highlight');
-    } else {
-      setClasses('tttGrid');
-    }
+    sendRequest('GET', '/account', "_csrf=".concat(csrf), function (account) {
+      response.account = account;
+      updateHighlight(response);
+    });
   });
   return /*#__PURE__*/React.createElement("table", {
     className: classes
@@ -331,7 +359,9 @@ var Chat = function Chat(props) {
     return /*#__PURE__*/React.createElement("li", {
       key: msg.id
     }, /*#__PURE__*/React.createElement("b", null, msg.username), ": ", msg.text);
-  })), /*#__PURE__*/React.createElement("input", {
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "messageContainer"
+  }, /*#__PURE__*/React.createElement("input", {
     type: "text",
     name: "message",
     id: "textMessage",
@@ -339,7 +369,7 @@ var Chat = function Chat(props) {
   }), /*#__PURE__*/React.createElement("button", {
     id: "btnSendMessage",
     onClick: handleSend
-  }, "Send"));
+  }, "Send")));
 };
 
 var TurnLabel = function TurnLabel(props) {
@@ -366,7 +396,10 @@ var TurnLabel = function TurnLabel(props) {
   }); // Every turn, check if it is the player's turn and update text
 
   socket.on('turn', function (response) {
-    updateLabel(response);
+    sendRequest('GET', '/account', "_csrf=".concat(csrf), function (account) {
+      response.account = account;
+      updateLabel(response);
+    });
   });
   socket.on('playerJoined', function (response) {
     sendRequest('GET', '/account', "_csrf=".concat(csrf), function (account) {
@@ -388,6 +421,8 @@ var TurnLabel = function TurnLabel(props) {
 var Game = function Game(props) {
   return /*#__PURE__*/React.createElement("div", {
     className: "game"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "gameContainer"
   }, /*#__PURE__*/React.createElement("h1", null, "Game"), /*#__PURE__*/React.createElement("div", {
     className: "board"
   }, /*#__PURE__*/React.createElement(UTTTGrid, {
@@ -398,7 +433,9 @@ var Game = function Game(props) {
   }, "Surrender"), /*#__PURE__*/React.createElement("button", {
     id: "btnLeaveRoom",
     onClick: handleLeave
-  }, "Leave"), /*#__PURE__*/React.createElement("h2", null, "Chat"), /*#__PURE__*/React.createElement(Chat, null));
+  }, "Leave")), /*#__PURE__*/React.createElement("div", {
+    className: "chatContainer"
+  }, /*#__PURE__*/React.createElement("h2", null, "Chat"), /*#__PURE__*/React.createElement(Chat, null)));
 };
 "use strict";
 
@@ -513,7 +550,12 @@ var handleTurn = function handleTurn(e, utttCell, tttCell) {
 
 
 var handleSurrender = function handleSurrender(e) {
-  sendRequest('POST', '/surrender', "_csrf=".concat(csrf), function (response) {// TODO
+  sendRequest('POST', '/surrender', "_csrf=".concat(csrf), function (response) {
+    if (response.winner !== '') {
+      socket.emit('winner', {
+        winner: response.winner
+      });
+    }
   });
 }; // Function to leave a room
 
@@ -521,8 +563,13 @@ var handleSurrender = function handleSurrender(e) {
 var handleLeave = function handleLeave(e) {
   sendRequest('POST', '/leave', "_csrf=".concat(csrf), function (response) {
     socket.emit('leaveRoom', response);
-    createGameList();
   });
+  createGameList();
+}; // Function to grab rooms in server and re-render them
+
+
+var handleRefresh = function handleRefresh(e) {
+  createGameList();
 };
 "use strict";
 
@@ -578,7 +625,11 @@ var getToken = function getToken(callback) {
 };
 
 var handleError = function handleError(message) {
-  console.log(message); // TODO
+  var errorDisplay = document.querySelector('#error-display');
+
+  if (errorDisplay) {
+    errorDisplay.innerHTML = "".concat(message);
+  }
 };
 
 var handleRedirect = function handleRedirect(response) {
@@ -643,5 +694,28 @@ document.addEventListener('DOMContentLoaded', function (e) {
   getToken(function (csrfToken) {
     csrf = csrfToken;
     init();
+  });
+});
+"use strict";
+
+// React Components
+var Rules = function Rules(props) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "rules"
+  }, /*#__PURE__*/React.createElement("h1", null, "Rules"), /*#__PURE__*/React.createElement("div", {
+    className: "explanation"
+  }, /*#__PURE__*/React.createElement("p", null, "Ultimate Tic Tac Toe is a slight variation of the traditional pen-and-paper game where, by changing a few simple rules, the game takes on a different form entirely. The rules of the game are simple."), /*#__PURE__*/React.createElement("p", null, "There is a big 3x3 grid of Tic Tac Toe and inside of each one of those cells, there is a smaller nested Tic Tac Toe game. To win the game entirely, you must win 3 of those nested Tic Tac Toe games in a line (horizontally, vertically, or diagonally)."), /*#__PURE__*/React.createElement("p", null, "As a reminder, to win a regular game of Tic Tac Toe you must place 3 of your symbols (X's or O's) in a line as well."), /*#__PURE__*/React.createElement("p", null, "Players take turns placing down their symbol in one of the small Tic Tac Toe grids. The first player to go can place their symbol anywhere. Here is the catch. After the first turn, the next player to go has to play within the small Tic Tac Toe grid that corresponds to the cell that was played last turn. That is to say, if the previous player placed their symbol in the bottom-right corner of a Tic Tac Toe grid, the next player has to place theirs in the Tic Tac Toe game that is in the bottom-right corner."), /*#__PURE__*/React.createElement("p", null, "You cannot play in a Tic Tac Toe game that has already been won, so if a player places their symbol in a cell that corresponds to an already won game, the next player can go anywhere they want to."), /*#__PURE__*/React.createElement("p", null, "That is it. Hope you like the game. GLHF!")));
+};
+
+var createRules = function createRules() {
+  ReactDOM.render( /*#__PURE__*/React.createElement(Rules, null), document.querySelector("#content"));
+};
+
+document.addEventListener('DOMContentLoaded', function (e) {
+  var rulesButton = document.querySelector("#rulesButton");
+  rulesButton.addEventListener("click", function (e) {
+    e.preventDefault();
+    createRules();
+    return false;
   });
 });

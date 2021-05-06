@@ -1,0 +1,66 @@
+.game {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.game > * {
+    margin: 0.6rem 2rem;
+    min-width: none;
+    min-height: none;
+}
+
+.turnLabel p {
+    font-family: 'Inter', sans-serif;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+#btnSurrender {
+    background-color: rgba(225, 73, 73, 1.0);
+    width: 128px;
+    font-size: 16px;
+}
+
+#btnLeaveRoom {
+    background-color: rgba(255, 212, 0, 1.0);
+    width: 128px;
+    font-size: 16px;
+}
+
+/* Chat */
+
+.chat {
+    max-width: 512px;
+}
+
+.chat ul {
+    padding: 1rem;
+    background-color: rgba(225, 225, 225, 0.25);
+    height: 128px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.chat ul li {
+    word-wrap: break-word;
+}
+
+.messageContainer {
+    display: grid;
+    grid-template-columns: 80fr 20fr;
+}
+
+.messageContainer>* {
+    min-width: 0;
+    min-height: 0;
+}
+
+#btnSendMessage {
+    background-color: rgba(255, 212, 0, 1.0);
+}
+
+@media only screen and (max-width: 1200px) {
+    .game {
+        grid-template-columns: 1fr;
+    }
+}

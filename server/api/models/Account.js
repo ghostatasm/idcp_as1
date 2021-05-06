@@ -39,6 +39,7 @@ const AccountSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  // Game Stats
   gamesPlayed: {
     type: Number,
     default: 0,
@@ -64,6 +65,7 @@ AccountSchema.statics.getSimplified = (doc) => ({
   _id: doc._id,
   gamesPlayed: doc.gamesPlayed,
   gamesWon: doc.gamesWon,
+  gamesTied: doc.gamesTied,
   gamesLost: doc.gamesLost,
 });
 

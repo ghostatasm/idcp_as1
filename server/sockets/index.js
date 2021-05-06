@@ -36,64 +36,91 @@ const start = (server) => {
             room: roomData,
           });
 
-        room.emit('playerJoined', {
-          player: account,
-          room: roomData,
-        });
-
-        room.emit('message', new Message(
-          'server',
-          `${account.username} has joined the room`,
-        ));
-
-        // Room events
-        socket.on('disconnect', () => {
-          socket.leave(roomSocketName);
-
-          room.emit('message', new Message(
-            'server',
-            `${account.username} has disconnected from the room`,
-          ));
-        });
-
-        socket.on('leaveRoom', (leaveRoomData) => {
-          socket.leave(roomSocketName);
-
-          room.emit('playerLeft', {
+        // If this is a player
+        if (account.username === roomData.players[0] || account.username === roomData.players[1]) {
+          room.emit('playerJoined', {
             player: account,
-            room: leaveRoomData,
+            room: roomData,
           });
 
           room.emit('message', new Message(
             'server',
-            `${account.username} has left the room`,
+            `${account.username} has joined the room`,
           ));
-        });
 
-        // Game Events
-        socket.on('turn', (turnData) => {
-          room.emit('turn', {
-            account,
-            room: turnData,
+          // Room events
+          socket.on('disconnect', () => {
+            socket.leave(roomSocketName);
+
+            room.emit('message', new Message(
+              'server',
+              `${account.username} has disconnected from the room`,
+            ));
           });
-        });
 
-        socket.on('winner', (winnerData) => {
-          room.emit('gameover', winnerData);
+          socket.on('leaveRoom', (leaveRoomData) => {
+            socket.leave(roomSocketName);
 
-          room.emit('message', new Message(
+            room.emit('playerLeft', {
+              player: account,
+              room: leaveRoomData,
+            });
+
+            room.emit('message', new Message(
+              'server',
+              `${account.username} has left the room`,
+            ));
+          });
+
+          // Game Events
+          socket.on('turn', (turnData) => {
+            room.emit('turn', {
+              player: account,
+              room: turnData,
+            });
+          });
+
+          socket.on('winner', (winnerData) => {
+            room.emit('gameover', winnerData);
+
+            room.emit('message', new Message(
+              'server',
+              `${winnerData.winner} wins the game!`,
+            ));
+          });
+
+          // Chat Events
+          socket.on('message', (msg) => {
+            room.emit('message', new Message(
+              account.username,
+              msg.text,
+            ));
+          });
+        } else {
+          // This is a spectator
+          const spectatorRoomSocketName = `ROOM:SPECTATORS:${_id}`; // Spectator room identifier
+          const spectatorRoom = sockets.to(spectatorRoomSocketName);
+
+          socket.join(spectatorRoomSocketName);
+
+          spectatorRoom.emit('playerJoined', {
+            player: account,
+            room: roomData,
+          });
+
+          spectatorRoom.emit('message', new Message(
             'server',
-            `${winnerData.winner} wins the game!`,
+            `${account.username} has joined the room`,
           ));
-        });
 
-        // Chat Events
-        socket.on('message', (msg) => {
-          room.emit('message', new Message(
-            account.username,
-            msg.text,
-          ));
-        });
+          // Chat Events
+          socket.on('message', (msg) => {
+            spectatorRoom.emit('message', new Message(
+              account.username,
+              msg.text,
+            ));
+          });
+        }
       });
     });
   });

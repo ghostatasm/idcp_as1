@@ -1,25 +1,21 @@
+@import url('./styles/defaults.css');
+@import url('./styles/login.css');
+@import url('./styles/app.css');
+@import url('./styles/game.css');
 @import url('./styles/board.css');
-
-* {
-    /* border: 1px solid black; */
-}
 
 #logo {
     width: 64px;
 }
 
-#loginButton {
-    
+#title {
+    margin-left: 1rem;
+    font-size: 25px;
+    display: none;
 }
 
-#signupButton {
-
-}
-
-#content {
-
-}
-
-#app {
-    
+@media only screen and (max-width: 462px) {
+    #title {
+        display: block;
+    }
 }

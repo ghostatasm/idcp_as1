@@ -1,5 +1,6 @@
 // Dependencies
 const mongoose = require('mongoose');
+const { AccountModel } = require('./Account.js');
 
 // Classes
 const { Error } = require('../classes');
@@ -24,11 +25,63 @@ const gameOver = (room, winner) => {
   const roomEdits = room;
 
   // Edit room
-  roomEdits.state = GAMEROOM_STATE.WAITING;
+  roomEdits.state = GAMEROOM_STATE.FINISHED;
   roomEdits.winner = winner;
 
   // Update Account stats
-  // TODO
+  AccountModel.findOneByUsername(room.players[0], (findErr, doc) => {
+    const docEdits = doc;
+
+    if (!findErr && docEdits) {
+      docEdits.gamesPlayed++;
+
+      if (winner === 'TIE') {
+        docEdits.gamesTied++;
+      } else if (docEdits.username === winner) {
+        docEdits.gamesWon++;
+      } else {
+        docEdits.gamesLost++;
+      }
+    } else {
+      if (findErr) {
+        console.log(findErr);
+      }
+      if (!docEdits) {
+        console.log('Could not find account of player 1');
+      }
+    }
+
+    docEdits.save().catch((err) => {
+      console.log(err);
+    });
+  });
+
+  AccountModel.findOneByUsername(room.players[1], (findErr, doc) => {
+    const docEdits = doc;
+
+    if (!findErr && docEdits) {
+      docEdits.gamesPlayed++;
+
+      if (winner === 'TIE') {
+        docEdits.gamesTied++;
+      } else if (docEdits.username === winner) {
+        docEdits.gamesWon++;
+      } else {
+        docEdits.gamesLost++;
+      }
+    } else {
+      if (findErr) {
+        console.log(findErr);
+      }
+      if (!docEdits) {
+        console.log('Could not find account of player 2');
+      }
+    }
+
+    docEdits.save().catch((err) => {
+      console.log(err);
+    });
+  });
 };
 
 /**
@@ -285,19 +338,30 @@ GameRoomSchema.statics.leave = async (id, username) => {
     }
   }
 
+  // Save changes to room in database
+  const editedDoc = await doc.save().catch((err) => {
+    console.log(err);
+    throw new Error(500, 'An error ocurred trying to leave the room');
+  });
+
   // If there are no players left in the room
   if (!doc.players[0] && !doc.players[1]) {
     // Delete room from database
-    return GameRoomModel.deleteOneByID(doc._id).catch((err) => {
+    GameRoomModel.deleteOneByID(doc._id).catch((err) => {
       console.log(err);
     });
   }
 
-  // Save changes to room in database
-  return doc.save().catch((err) => {
-    console.log(err);
-    throw new Error(500, 'An error ocurred trying to leave the room');
-  });
+  // If any player leaves and the game is finished
+  if (doc.state === GAMEROOM_STATE.FINISHED) {
+    // Delete room from database
+    GameRoomModel.deleteOneByID(doc._id).catch((err) => {
+      console.log(err);
+    });
+  }
+
+  // Return edited room
+  return editedDoc;
 };
 
 GameRoomSchema.statics.turn = async (id, username, turn) => {
@@ -313,58 +377,115 @@ GameRoomSchema.statics.turn = async (id, username, turn) => {
 
   // Edit room
 
-  // Check that the game has started
-  if (doc.state === GAMEROOM_STATE.PLAYING) {
-    // JS Typecasting wizardry (new Number(false) === 0, new Number(true) === 1)
-    if (username === doc.players[+doc.nextPlayer]) {
-      // If this is the right player
-      const [utttCell, tttCell] = turn;
+  // Check that the user is a player
+  if (username === doc.players[0] || username === doc.players[1]) {
+    // Check that the game has started
+    if (doc.state === GAMEROOM_STATE.PLAYING) {
+      // JS Typecasting wizardry (new Number(false) === 0, new Number(true) === 1)
+      if (username === doc.players[+doc.nextPlayer]) {
+        // If this is the right player
+        const [utttCell, tttCell] = turn;
 
-      // Make sure indexes do not cause indexOutOfRange exceptions
-      if (utttCell >= 0 && utttCell <= 8 && tttCell >= 0 && tttCell <= 8) {
-        // If this is the first move
-        // Or the previous move points to a cell already won
-        // Do it.
-        // Otherwise, check that it was played in the right UTTT cell
-        if (doc.turn <= 0 || getTTTWinner(doc.board[doc.lastTurn[1]]) !== ' ' || doc.lastTurn[1] === utttCell) {
-          // Check that this cell that has not been won yet
-          if (getTTTWinner(doc.board[utttCell]) === ' ') {
-            doc.turn++; // Increase turn counter
+        // Make sure indexes do not cause indexOutOfRange exceptions
+        if (utttCell >= 0 && utttCell <= 8 && tttCell >= 0 && tttCell <= 8) {
+          // If this is the first move
+          // Or the previous move points to a cell already won
+          // Do it.
+          // Otherwise, check that it was played in the right UTTT cell
+          if (doc.turn <= 0 || getTTTWinner(doc.board[doc.lastTurn[1]]) !== ' ' || doc.lastTurn[1] === utttCell) {
+            // Check that this cell that has not been won yet
+            if (getTTTWinner(doc.board[utttCell]) === ' ') {
+              // Check that this cell has not been played in already
+              if (doc.board[utttCell][tttCell] === ' ') {
+                doc.turn++; // Increase turn counter
 
-            // Update board
-            doc.board[utttCell][tttCell] = doc.turn % 2 === 0 ? 'O' : 'X';
-            doc.markModified('board');
+                // Update board
+                doc.board[utttCell][tttCell] = doc.turn % 2 === 0 ? 'O' : 'X';
+                doc.markModified('board');
 
-            // Check winner
-            const winner = getUTTTWinner(doc.board);
-            if (winner === ' ') {
-              // Game isn't over yet
-              doc.nextPlayer = !doc.nextPlayer; // Toggle next player
-              doc.lastTurn = [utttCell, tttCell]; // Save move as the last one
-              doc.markModified('lastTurn');
+                // Check winner
+                const winner = getUTTTWinner(doc.board);
+                if (winner === ' ') {
+                  // Game isn't over yet
+                  doc.nextPlayer = !doc.nextPlayer; // Toggle next player
+                  doc.lastTurn = [utttCell, tttCell]; // Save move as the last one
+                  doc.markModified('lastTurn');
+                }
+
+                // There was a winner/tie
+                if (winner !== ' ' && winner !== 'TIE') {
+                  // The player that was going next is the winner
+                  gameOver(doc, doc.players[+doc.nextPlayer]);
+                }
+
+                // Save changes to room in database
+                const editedDoc = await doc.save().catch((err) => {
+                  console.log(err);
+                  throw new Error(400, 'An error ocurred trying to save your turn');
+                });
+
+                // There was a winner/tie
+                if (winner !== ' ' && winner !== 'TIE') {
+                  // Delete room from database
+                  GameRoomModel.deleteOneByID(doc._id).catch((err) => {
+                    console.log(err);
+                  });
+                }
+
+                // Return edited room
+                return editedDoc;
+              }
+              throw new Error(400, 'Cell is not empty');
             }
-
-            // There was a winner/tie
-            if (winner !== ' ' && winner !== 'TIE') {
-              // The player that was going next is the winner
-              gameOver(doc, doc.players[+doc.nextPlayer]);
-            }
-
-            // Save changes to room in database
-            return doc.save().catch((err) => {
-              console.log(err);
-              throw new Error(400, 'An error ocurred trying to save your turn');
-            });
+            throw new Error(400, 'Cell finished already');
           }
-          throw new Error(400, 'Cell finished already');
+          throw new Error(400, 'Must play in the correct cell');
         }
-        throw new Error(400, 'Must play in the correct cell');
+        throw new Error(400, 'Cell index out of range');
       }
-      throw new Error(400, 'Cell index out of range');
+      throw new Error(400, 'It is not your turn');
     }
-    throw new Error(400, 'It is not your turn');
+    throw new Error(400, 'The game has not yet started');
   }
-  throw new Error(400, 'The game has not yet started');
+  throw new Error(400, 'You are not a player in this game');
+};
+
+GameRoomSchema.statics.surrender = async (id, username) => {
+  // Find room
+  const doc = await GameRoomModel.findOneByID(id).catch((err) => {
+    console.log(err);
+    throw err;
+  });
+
+  if (!doc) {
+    throw new Error(404, 'No room found with the ID specified');
+  }
+
+  // Edit room
+  if (username === doc.players[0] && username === doc.players[1]) {
+    // If player is playing against itself just finish the game
+    doc.state = GAMEROOM_STATE.FINISHED;
+  } else if (doc.state === GAMEROOM_STATE.PLAYING) {
+    // If this is player 1
+    if (username === doc.players[0]) {
+      // Declare player 2 the winner
+      gameOver(doc, doc.players[1]);
+    } else if (username === doc.players[1]) {
+      // If this is player 2
+      // Declare player 1 the winner
+      gameOver(doc, doc.players[0]);
+    } else {
+      throw new Error(400, 'You are not a player in this game');
+    }
+  } else {
+    throw new Error(400, 'The game has not yet started, you cannot surrender');
+  }
+
+  // Save changes to room in database
+  return doc.save().catch((err) => {
+    console.log(err);
+    throw new Error(500, 'An error ocurred trying to surrender');
+  });
 };
 
 GameRoomModel = mongoose.model('GameRoom', GameRoomSchema);

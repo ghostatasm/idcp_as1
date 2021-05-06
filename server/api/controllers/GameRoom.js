@@ -1,7 +1,6 @@
 const { GameRoomModel /* , GAMEROOM_STATE */ } = require('../models/GameRoom.js');
 
 // Returns slice of rooms in server
-// TODO: return slice instead of full list of rooms
 const rooms = (req, res) => GameRoomModel.find({})
   .then((doc) => res.json(doc))
   .catch(() => res.status(500).json({ error: 'An error ocurred retrieving the rooms' }));
@@ -10,14 +9,28 @@ const rooms = (req, res) => GameRoomModel.find({})
 // Returns room specified in QUERY ID
 // Returns room in session if no ID specified in QUERY
 const room = (req, res) => {
+  if (!req.query.id && !req.session.room) {
+    return res.status(400).json({
+      error: 'Room ID is undefined in query string and room is undefined in request session',
+    });
+  }
+
   // Search by ID
   if (req.query.id) {
     return GameRoomModel.findOneByID(req.query.id)
       .then((doc) => res.json(doc))
       .catch((err) => res.status(err.statusCode).json({ error: err.message }));
   }
+
   // Return room in session
-  return res.json(req.session.room);
+  return GameRoomModel.findOneByID(req.session.room._id)
+    .then((doc) => {
+      // Update room in session
+      req.session.room = doc;
+      // Return it
+      return res.json(doc);
+    })
+    .catch((err) => res.status(err.statusCode).json({ error: err.message }));
 };
 
 // Returns board of room in session
@@ -123,7 +136,20 @@ const turn = (req, res) => {
     ])
     .then((doc) => {
       req.session.room = doc;
-      res.json(doc);
+      return res.json(doc);
+    })
+    .catch((err) => res.status(err.statusCode).json({ error: err.message }));
+};
+
+const surrender = (req, res) => {
+  if (!req.session.room) {
+    return res.status(400).json({ error: 'Room is undefined in request session' });
+  }
+
+  return GameRoomModel.surrender(req.session.room._id, req.session.account.username)
+    .then((doc) => {
+      req.session.room = doc;
+      return res.json(doc);
     })
     .catch((err) => res.status(err.statusCode).json({ error: err.message }));
 };
@@ -138,4 +164,5 @@ module.exports = {
   create,
   leave,
   turn,
+  surrender,
 };

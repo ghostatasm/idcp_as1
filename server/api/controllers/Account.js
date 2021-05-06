@@ -21,7 +21,7 @@ const login = (req, res) => {
     }
 
     if (!account) {
-      return res.status(401).json({ error: 'Wrong username or password' });
+      return res.status(400).json({ error: 'Wrong username or password' });
     }
 
     // Set session account cookie
@@ -116,8 +116,23 @@ const resetPassword = (req, res) => {
 const account = (req, res) => {
   // If there is an account in session
   if (req.session.account) {
-    // Send it
-    return res.json(req.session.account);
+    // Look for it in DB by username
+    return AccountModel.findOneByUsername(req.session.account.username, (findErr, doc) => {
+      if (findErr) {
+        console.log(findErr);
+        return res.status(500).json({ error: 'An error ocurred retrieving your account' });
+      }
+
+      if (!doc) {
+        return res.status(400).json({ error: 'No account found with the username specified' });
+      }
+
+      // Update account in session
+      req.session.account = AccountModel.getSimplified(doc);
+
+      // Return it
+      return res.json(req.session.account);
+    });
   }
 
   // Otherwise return an error

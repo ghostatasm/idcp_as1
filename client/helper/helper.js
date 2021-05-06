@@ -8,9 +8,10 @@ const getToken = (callback) => {
 };
 
 const handleError = (message) => {
-    console.log(message);
-
-    // TODO
+    const errorDisplay = document.querySelector('#error-display');
+    if (errorDisplay) {
+        errorDisplay.innerHTML = `${message}`;
+    }
 };
 
 const handleRedirect = (response) => {

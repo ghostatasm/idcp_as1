@@ -39,7 +39,11 @@ var handleSignup = function handleSignup(e) {
 
 
 var LoginWindow = function LoginWindow(props) {
-  return /*#__PURE__*/React.createElement("form", {
+  return /*#__PURE__*/React.createElement("div", {
+    id: "login-window"
+  }, /*#__PURE__*/React.createElement("p", {
+    id: "error-display"
+  }), /*#__PURE__*/React.createElement("form", {
     id: "loginForm",
     name: "loginForm",
     onSubmit: handleLogin,
@@ -51,26 +55,32 @@ var LoginWindow = function LoginWindow(props) {
     id: "user",
     type: "text",
     name: "username",
-    placeholder: "username"
+    placeholder: "username",
+    autoComplete: "on"
   }), /*#__PURE__*/React.createElement("label", {
     htmlFor: "pass"
   }, "Password: "), /*#__PURE__*/React.createElement("input", {
     id: "pass",
     type: "password",
     name: "pass",
-    placeholder: "password"
+    placeholder: "password",
+    autoComplete: "on"
   }), /*#__PURE__*/React.createElement("input", {
     type: "hidden",
     name: "_csrf",
     value: props.csrf
   }), /*#__PURE__*/React.createElement("input", {
     type: "submit",
-    value: "login"
-  }));
+    value: "Login"
+  })));
 };
 
 var SignupWindow = function SignupWindow(props) {
-  return /*#__PURE__*/React.createElement("form", {
+  return /*#__PURE__*/React.createElement("div", {
+    id: "signup-window"
+  }, /*#__PURE__*/React.createElement("p", {
+    id: "error-display"
+  }), /*#__PURE__*/React.createElement("form", {
     id: "signupForm",
     name: "signupForm",
     onSubmit: handleSignup,
@@ -82,29 +92,32 @@ var SignupWindow = function SignupWindow(props) {
     id: "user",
     type: "text",
     name: "username",
-    placeholder: "username"
+    placeholder: "username",
+    autoComplete: "on"
   }), /*#__PURE__*/React.createElement("label", {
     htmlFor: "pass"
   }, "Password: "), /*#__PURE__*/React.createElement("input", {
     id: "pass",
     type: "password",
     name: "pass",
-    placeholder: "password"
+    placeholder: "password",
+    autoComplete: "on"
   }), /*#__PURE__*/React.createElement("label", {
     htmlFor: "pass2"
   }, "Password: "), /*#__PURE__*/React.createElement("input", {
     id: "pass2",
     type: "password",
     name: "pass2",
-    placeholder: "retype password"
+    placeholder: "retype password",
+    autoComplete: "on"
   }), /*#__PURE__*/React.createElement("input", {
     type: "hidden",
     name: "_csrf",
     value: props.csrf
   }), /*#__PURE__*/React.createElement("input", {
     type: "submit",
-    value: "signup"
-  }));
+    value: "Signup"
+  })));
 }; // React component factories
 
 
@@ -149,7 +162,11 @@ var getToken = function getToken(callback) {
 };
 
 var handleError = function handleError(message) {
-  console.log(message); // TODO
+  var errorDisplay = document.querySelector('#error-display');
+
+  if (errorDisplay) {
+    errorDisplay.innerHTML = "".concat(message);
+  }
 };
 
 var handleRedirect = function handleRedirect(response) {
@@ -214,5 +231,28 @@ document.addEventListener('DOMContentLoaded', function (e) {
   getToken(function (csrfToken) {
     csrf = csrfToken;
     init();
+  });
+});
+"use strict";
+
+// React Components
+var Rules = function Rules(props) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "rules"
+  }, /*#__PURE__*/React.createElement("h1", null, "Rules"), /*#__PURE__*/React.createElement("div", {
+    className: "explanation"
+  }, /*#__PURE__*/React.createElement("p", null, "Ultimate Tic Tac Toe is a slight variation of the traditional pen-and-paper game where, by changing a few simple rules, the game takes on a different form entirely. The rules of the game are simple."), /*#__PURE__*/React.createElement("p", null, "There is a big 3x3 grid of Tic Tac Toe and inside of each one of those cells, there is a smaller nested Tic Tac Toe game. To win the game entirely, you must win 3 of those nested Tic Tac Toe games in a line (horizontally, vertically, or diagonally)."), /*#__PURE__*/React.createElement("p", null, "As a reminder, to win a regular game of Tic Tac Toe you must place 3 of your symbols (X's or O's) in a line as well."), /*#__PURE__*/React.createElement("p", null, "Players take turns placing down their symbol in one of the small Tic Tac Toe grids. The first player to go can place their symbol anywhere. Here is the catch. After the first turn, the next player to go has to play within the small Tic Tac Toe grid that corresponds to the cell that was played last turn. That is to say, if the previous player placed their symbol in the bottom-right corner of a Tic Tac Toe grid, the next player has to place theirs in the Tic Tac Toe game that is in the bottom-right corner."), /*#__PURE__*/React.createElement("p", null, "You cannot play in a Tic Tac Toe game that has already been won, so if a player places their symbol in a cell that corresponds to an already won game, the next player can go anywhere they want to."), /*#__PURE__*/React.createElement("p", null, "That is it. Hope you like the game. GLHF!")));
+};
+
+var createRules = function createRules() {
+  ReactDOM.render( /*#__PURE__*/React.createElement(Rules, null), document.querySelector("#content"));
+};
+
+document.addEventListener('DOMContentLoaded', function (e) {
+  var rulesButton = document.querySelector("#rulesButton");
+  rulesButton.addEventListener("click", function (e) {
+    e.preventDefault();
+    createRules();
+    return false;
   });
 });

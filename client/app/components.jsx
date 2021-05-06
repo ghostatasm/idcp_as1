@@ -6,10 +6,16 @@ const isPlayersTurn = (account, room) => {
 // Returns index of cell to highlight
 // -1 means all should be highlighted
 // Anything except 0-8 means none highlighted
-const getCellToHighlight = (room) => {
-    if (room.turn <= 0 || getTTTWinner(room.board[room.lastTurn[1]]) !== ' ') {
+const getCellToHighlight = (account, room) => {
+    // If the game is not running, don't highlight anything
+    if (room.state !== 'Playing' || !isPlayersTurn(account, room)) {
+        return -2;
+    }
+    // If it's the first turn or last turn points to a won board highlight all
+    else if (room.turn <= 0 || getTTTWinner(room.board[room.lastTurn[1]]) !== ' ') {
         return -1
     }
+    // Highlight cell that last turn points to
     else {
         return room.lastTurn[1];
     }
@@ -21,15 +27,24 @@ const AccountWindow = (props) => {
         <div className="accountWindow">
             <h1>Account</h1>
             <div className="info">
-                <label htmlFor="username">Username:</label><p className="username">{props.account.username}</p>
-                <label htmlFor="gamesPlayed">Games Played:</label><p className="gamesPlayed">{props.account.gamesPlayed}</p>
-                <label htmlFor="wonLost">Won/Tied/Lost:</label><p className="wonLost">{props.account.gamesWon}/{props.account.gamesTied}/{props.account.gamesLost}</p>
+                <div className="username-container">
+                    <label htmlFor="username">Username:</label>
+                    <p className="username">{props.account.username}</p>
+                </div>
+                <div className="gamesPlayerContainer">
+                    <label htmlFor="gamesPlayed">Games Played:</label>
+                    <p className="gamesPlayed">{props.account.gamesPlayed}</p>
+                </div>
+                <div className="wonLostContainer">
+                    <label htmlFor="wonLost">Won/Tied/Lost:</label>
+                    <p className="wonLost">{props.account.gamesWon}/{props.account.gamesTied}/{props.account.gamesLost}</p>
+                </div>
             </div>
             <form action="/resetPassword" method="post" onSubmit={handleResetPassword} id="resetPasswordForm">
-                <label htmlFor="pass">Password: </label>
-                <input id="pass" type="password" name="pass" placeholder="password" />
-                <label htmlFor="pass2">Password: </label>
-                <input id="pass2" type="password" name="pass2" placeholder="retype password" />
+                <label htmlFor="pass">New Password: </label>
+                <input id="pass" type="password" name="pass" placeholder="password" autoComplete="on" />
+                <label htmlFor="pass2">New Password: </label>
+                <input id="pass2" type="password" name="pass2" placeholder="retype password" autoComplete="on" />
                 <input type="hidden" name="_csrf" value={csrf} />
                 <input type="submit" value="Reset Password" />
             </form>
@@ -47,6 +62,7 @@ const GameList = (props) => {
                 <input type="hidden" name="_csrf" value={props.csrf} />
                 <input type="submit" value="Create Room" />
             </form>
+            <button onClick={handleRefresh}>Refresh Game List</button>
             <table>
                 <thead>
                     <tr>
@@ -58,7 +74,7 @@ const GameList = (props) => {
                     </tr>
                 </thead>
                 <tbody>
-                    {props.rooms.map(room => {
+                    {props.rooms.length > 0 ? props.rooms.map(room => {
                         return (
                             <tr key={room._id}>
                                 <th>{room.name}</th>
@@ -68,7 +84,14 @@ const GameList = (props) => {
                                 <th><button className="btnJoin" onClick={(e) => handleJoin(e, room._id)}>Join</button></th>
                             </tr>
                         );
-                    })}
+                    }) :
+                        <tr>
+                            <th>No rooms found</th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                        </tr>}
                 </tbody>
             </table>
         </div>
@@ -78,24 +101,39 @@ const GameList = (props) => {
 const TTTGrid = (props) => {
     const [classes, setClasses] = React.useState('tttGrid');
 
-    socket.on('joinRoom', response => {
-        const index = +getCellToHighlight(response.room);
+    const updateHighlight = (response) => {
+        const index = +getCellToHighlight(response.account, response.room);
         if (index === -1 || index === props.utttcell) {
             setClasses('tttGrid highlight');
         }
         else {
             setClasses('tttGrid');
         }
+    };
+
+    socket.on('joinRoom', response => {
+        updateHighlight(response);
+    });
+
+    socket.on('playerJoined', response => {
+        sendRequest('GET', '/account', `_csrf=${csrf}`, account => {
+            response.account = account;
+            updateHighlight(response);
+        });
+    });
+
+    socket.on('playerLeft', response => {
+        sendRequest('GET', '/account', `_csrf=${csrf}`, account => {
+            response.account = account;
+            updateHighlight(response);
+        });
     });
 
     socket.on('turn', response => {
-        const index = +getCellToHighlight(response.room);
-        if (index === -1 || index === props.utttcell) {
-            setClasses(classes + ' highlight');
-        }
-        else {
-            setClasses('tttGrid');
-        }
+        sendRequest('GET', '/account', `_csrf=${csrf}`, account => {
+            response.account = account;
+            updateHighlight(response);
+        });
     });
 
     return (
@@ -181,8 +219,11 @@ const Chat = (props) => {
     return (
         <div className="chat">
             <ul>{messages.map(msg => <li key={msg.id}><b>{msg.username}</b>: {msg.text}</li>)}</ul>
-            <input type="text" name="message" id="textMessage" onKeyPress={handleKeypressSend} />
-            <button id="btnSendMessage" onClick={handleSend}>Send</button>
+            <div className="messageContainer">
+                <input type="text" name="message" id="textMessage" onKeyPress={handleKeypressSend} />
+                <button id="btnSendMessage" onClick={handleSend}>Send</button>
+            </div>
+
         </div>
     );
 };
@@ -211,7 +252,10 @@ const TurnLabel = (props) => {
 
     // Every turn, check if it is the player's turn and update text
     socket.on('turn', response => {
-        updateLabel(response);
+        sendRequest('GET', '/account', `_csrf=${csrf}`, account => {
+            response.account = account;
+            updateLabel(response);
+        });
     });
 
     socket.on('playerJoined', response => {
@@ -238,20 +282,24 @@ const TurnLabel = (props) => {
 const Game = (props) => {
     return (
         <div className="game">
-            <h1>Game</h1>
+            <div className="gameContainer">
+                <h1>Game</h1>
 
-            <div className="board">
-                <UTTTGrid board={props.board} />
+                <div className="board">
+                    <UTTTGrid board={props.board} />
+                </div>
+
+                <TurnLabel />
+
+                <button id="btnSurrender" onClick={handleSurrender}>Surrender</button>
+                <button id="btnLeaveRoom" onClick={handleLeave}>Leave</button>
             </div>
 
-            <TurnLabel />
+            <div className="chatContainer">
+                <h2>Chat</h2>
 
-            <button id="btnSurrender" onClick={handleSurrender}>Surrender</button>
-            <button id="btnLeaveRoom" onClick={handleLeave}>Leave</button>
-
-            <h2>Chat</h2>
-
-            <Chat />
+                <Chat />
+            </div>
         </div>
     );
 };

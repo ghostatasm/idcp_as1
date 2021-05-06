@@ -87,7 +87,9 @@ const handleTurn = (e, utttCell, tttCell) => {
 // Function to flag that player has surrendered
 const handleSurrender = (e) => {
     sendRequest('POST', '/surrender', `_csrf=${csrf}`, response => {
-        // TODO
+        if (response.winner !== '') {
+            socket.emit('winner', { winner: response.winner });
+        }
     });
 };
 
@@ -95,6 +97,12 @@ const handleSurrender = (e) => {
 const handleLeave = (e) => {
     sendRequest('POST', '/leave', `_csrf=${csrf}`, response => {
         socket.emit('leaveRoom', response);
-        createGameList();
     });
+
+    createGameList();
+};
+
+// Function to grab rooms in server and re-render them
+const handleRefresh = (e) => {
+    createGameList();
 };

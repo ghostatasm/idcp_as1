@@ -24,6 +24,7 @@ const router = (app) => {
   app.post('/rejoin', mid.requiresSecure, mid.requiresLogin, controllers.GameRoom.rejoin);
   app.post('/leave', mid.requiresLogin, controllers.GameRoom.leave);
   app.post('/turn', mid.requiresSecure, mid.requiresLogin, controllers.GameRoom.turn);
+  app.post('/surrender', mid.requiresSecure, mid.requiresLogin, controllers.GameRoom.surrender);
 
   // Index
   app.get('/', mid.requiresSecure, mid.requiresLogout, pages.loginPage);
