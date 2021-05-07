@@ -175,10 +175,12 @@ const start = (server) => {
 
           // Chat Events
           socket.on('message', (msg) => {
-            room.emit('message', new Message(
-              account.username,
-              msg.text,
-            ));
+            if (isPlayerInGame(account, roomData)) {
+              room.emit('message', new Message(
+                account.username,
+                msg.text,
+              ));
+            }
           });
         } else {
           // This is a spectator
