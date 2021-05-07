@@ -1,4 +1,5 @@
 const socketIO = require('socket.io');
+const unirest = require('unirest');
 
 const { Message } = require('./classes');
 
@@ -24,7 +25,6 @@ const start = (server) => {
     socket.on('error', (err) => {
       console.log(`ERROR: socket ${socket.id} - Error: ${err}`);
     });
-
     // On account received
     socket.on('account', (accountData) => {
       const { account } = accountData;
@@ -66,6 +66,27 @@ const start = (server) => {
               'server',
               `${account.username} has disconnected from the room`,
             ));
+
+            // Delete rooms with no sockets on them
+            // To avoid stray rooms from creators that leave the site
+            // without leaving the room
+
+            // Only true if both players have disconnected from the room
+            if (!sockets.adapter.rooms.has(roomName)) {
+              const hostname = socket.request.headers.host;
+
+              // Send request to delete the room
+
+              unirest.get(`http://${hostname}/deleteRoom?id=${_id}`)
+                .headers({
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                })
+                .then((response) => response.body)
+                .catch((err) => {
+                  console.log(err);
+                });
+            }
           });
 
           socket.on('leaveRoom', (leaveRoomData) => {

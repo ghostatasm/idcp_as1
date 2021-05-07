@@ -26,6 +26,9 @@ const router = (app) => {
   app.post('/turn', mid.requiresSecure, mid.requiresLogin, controllers.GameRoom.turn);
   app.post('/surrender', mid.requiresSecure, mid.requiresLogin, controllers.GameRoom.surrender);
 
+  // Admin
+  app.get('/deleteRoom', mid.requiresSecure, controllers.GameRoom.deleteRoom);
+
   // Index
   app.get('/', mid.requiresSecure, mid.requiresLogout, pages.loginPage);
 

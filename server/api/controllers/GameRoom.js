@@ -154,6 +154,16 @@ const surrender = (req, res) => {
     .catch((err) => res.status(err.statusCode).json({ error: err.message }));
 };
 
+const deleteRoom = (req, res) => {
+  if (!req.query.id) {
+    return res.status(400).json({ error: 'Room ID is undefined in request query string' });
+  }
+
+  return GameRoomModel.deleteOneByID(req.query.id).catch((err) => {
+    console.log(err);
+  }).then((doc) => res.json(doc));
+};
+
 module.exports = {
   rooms,
   room,
@@ -164,4 +174,5 @@ module.exports = {
   leave,
   turn,
   surrender,
+  deleteRoom,
 };

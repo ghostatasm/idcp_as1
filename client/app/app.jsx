@@ -36,7 +36,7 @@ const init = () => {
                 room = roomResponse;
 
                 sendRequest('POST', '/rejoin', `_csrf=${csrf}&id=${room._id}`, rejoinResponse => {
-                    socket.emit('joinRoom',  {
+                    socket.emit('joinRoom', {
                         room: rejoinResponse,
                     });
                     createGame(rejoinResponse.board);
@@ -52,10 +52,8 @@ const init = () => {
     sendRequest('GET', '/account', `_csrf=${csrf}`, accountResponse => {
         // Set session information
         account = accountResponse;
-        
-        socket.emit('account', {
-            account,
-        });
+
+        socket.emit('account', { account });
 
         // Check if the player is in a game
         sendRequest('GET', '/room', null, roomResponse => {
