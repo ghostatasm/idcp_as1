@@ -14,6 +14,11 @@
     display: none;
 }
 
+#not-found-return {
+    color: blue;
+    text-decoration: underline;
+}
+
 @media only screen and (max-width: 462px) {
     #title {
         display: block;

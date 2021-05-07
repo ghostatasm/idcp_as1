@@ -169,8 +169,19 @@ const start = (server) => {
 
           spectatorRoom.emit('message', new Message(
             'server',
-            `${account.username} has joined the room`,
+            `${account.username} has joined the room as a spectator`,
           ));
+
+          socket.on('leaveRoom', () => {
+            // Leave the socket from the room
+            socket.leave(spectatorRoomName);
+
+            // Emit a leave message to the chat
+            spectatorRoom.emit('message', new Message(
+              'server',
+              `spectator ${account.username} has left the room`,
+            ));
+          });
 
           // Chat Events
           socket.on('message', (msg) => {
