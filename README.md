@@ -1,4 +1,8 @@
-# Rich Media Project 2 Documentation
+# Rich Media Project 2
+
+## Documentation
+
+[Documentation](https://github.com/crlimacastro/crl3554-430-project-2/blob/master/documentation.md)
 
 ## Table of Contents
 

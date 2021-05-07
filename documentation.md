@@ -1,4 +1,4 @@
-# Documentation
+# Rich Media Project 2 Documentation
 
 ## Functional Endpoints
 
