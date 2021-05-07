@@ -33,6 +33,8 @@
 .gameList table {
     margin: 1rem;
     width: 90%;
+    max-height: 512px;
+    overflow-y: auto;
 }
 
 .gameList tr {
