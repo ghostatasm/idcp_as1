@@ -1,0 +1,82 @@
+/* Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto&display=swap');
+
+body {
+    padding: 1rem;
+    font-family: 'Roboto', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif;
+}
+
+header {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+}
+
+header nav { 
+    display: flex;
+    flex-flow: row nowrap;
+}
+
+header nav > * {
+    margin: 0.6rem;
+    padding: 0.4rem;
+}
+
+header nav > *:hover {
+    background-color: rgba(225, 225, 225, 0.25);
+}
+
+header nav a {
+    font-family: 'Inter', sans-serif;
+    white-space: nowrap;
+    font-weight: bold;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+form {
+    margin: 1rem;
+    display: flex;
+    flex-flow: column nowrap;
+}
+
+form > * {
+    max-width: 512px;
+    margin: 0.4rem 0.2rem;
+}
+
+button,
+input[type="submit"] {
+    border: none;
+    border-radius: 0;
+    padding: 0.6rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: bold;
+    background-color: rgba(225, 225, 225, 0.5);
+}
+
+button:hover,
+input[type="submit"]:hover {
+    background-color: rgba(225, 225, 225, 0.4);
+}
+
+input[type="text"] {
+    font-family: 'Roboto', sans-serif;
+}
+
+p {
+    font-family: 'Roboto', sans-serif;
+    max-width: 512px;
+}
+
+ul {
+    padding-left: 0;
+    list-style-type: none;
+}

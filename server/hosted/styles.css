@@ -1,0 +1,26 @@
+@import url('./styles/defaults.css');
+@import url('./styles/login.css');
+@import url('./styles/app.css');
+@import url('./styles/game.css');
+@import url('./styles/board.css');
+
+#logo {
+    width: 64px;
+}
+
+#title {
+    margin-left: 1rem;
+    font-size: 25px;
+    display: none;
+}
+
+#not-found-return {
+    color: blue;
+    text-decoration: underline;
+}
+
+@media only screen and (max-width: 462px) {
+    #title {
+        display: block;
+    }
+}

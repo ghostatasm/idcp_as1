@@ -1,0 +1,50 @@
+/* Account */
+.info {
+    margin: 1rem;
+    margin-top: 2rem;
+}
+
+.info label {
+    font-weight: bold;
+}
+
+.info>* {
+    display: flex;
+    align-items: center;
+}
+
+.info>*>* {
+    margin-right: 0.4rem;
+}
+
+#resetPasswordForm {
+    margin-top: 4rem;
+}
+
+/* Games */
+#createForm input[type="submit"] {
+    background-color: rgba(255, 212, 0, 1.0);
+}
+
+#createForm input[type="submit"]:hover {
+    background-color: rgba(225, 225, 225, 0.4);
+}
+
+.gameList table {
+    margin: 1rem;
+    width: 90%;
+    max-height: 512px;
+    overflow-y: auto;
+}
+
+.gameList tr {
+    background-color: rgba(225, 225, 225, 0.25);
+}
+
+.btnJoin {
+    background-color: rgba(255, 212, 0, 1.0);
+}
+
+.gameList th {
+    padding: 0.4rem;
+}
